@@ -1,0 +1,32 @@
+﻿@ShopApp_HostAddress = http://localhost:5181
+
+### GET
+
+### Отримати всі елементи
+GET {{ShopApp_HostAddress}}/api/items
+
+### Отримати елемент по Id
+GET {{ShopApp_HostAddress}}/api/items/2
+
+### Пошук за назвою
+GET {{ShopApp_HostAddress}}/api/items/search?name=tablet
+
+### POST
+
+POST {{ShopApp_HostAddress}}/api/items
+Content-Type: application/json
+{
+  "name": "Marker"
+}
+
+### PUT
+
+PUT {{ShopApp_HostAddress}}/api/items/4
+Content-Type: application/json
+{
+  "name": "Blue Marker"
+}
+
+### DELETE
+
+DELETE {{ShopApp_HostAddress}}/api/items/1
