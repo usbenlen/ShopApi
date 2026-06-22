@@ -1,4 +1,4 @@
-using ShopApp.Interfaces;
+п»їusing ShopApp.Interfaces;
 using ShopApp.Services;
 
 namespace ShopApp;
@@ -9,8 +9,8 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllers();
-        //builder.Services.AddScoped<IProductService, ProductService>(); // При кожному запиті створюється новий екземпляр об'єкту. (Тобто сервіс не збереже останні POST запити (безпечно)).
-        builder.Services.AddSingleton<IProductService, ProductService>(); // При кожному запиті лишається той самий об'єкт (Сервіс збереже POST запити, для деяких випадків корисно, і потрібно (Дещо небезпечно)).
+        //builder.Services.AddScoped<IProductService, ProductService>(); // РџСЂРё РєРѕР¶РЅРѕРјСѓ Р·Р°РїРёС‚С– СЃС‚РІРѕСЂСЋС”С‚СЊСЃСЏ РЅРѕРІРёР№ РµРєР·РµРјРїР»СЏСЂ РѕР±'С”РєС‚Сѓ. (РўРѕР±С‚Рѕ СЃРµСЂРІС–СЃ РЅРµ Р·Р±РµСЂРµР¶Рµ РѕСЃС‚Р°РЅРЅС– POST Р·Р°РїРёС‚Рё (Р±РµР·РїРµС‡РЅРѕ)).
+        builder.Services.AddSingleton<IProductService, ProductService>(); // РџСЂРё РєРѕР¶РЅРѕРјСѓ Р·Р°РїРёС‚С– Р»РёС€Р°С”С‚СЊСЃСЏ С‚РѕР№ СЃР°РјРёР№ РѕР±'С”РєС‚ (РЎРµСЂРІС–СЃ Р·Р±РµСЂРµР¶Рµ POST Р·Р°РїРёС‚Рё, РґР»СЏ РґРµСЏРєРёС… РІРёРїР°РґРєС–РІ РєРѕСЂРёСЃРЅРѕ, С– РїРѕС‚СЂС–Р±РЅРѕ (Р”РµС‰Рѕ РЅРµР±РµР·РїРµС‡РЅРѕ)).
         builder.Services.AddSingleton<ICategoryService, CategoryService>();
 
         var app = builder.Build();
