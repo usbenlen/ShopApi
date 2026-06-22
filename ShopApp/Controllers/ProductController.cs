@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ShopApp.Interfaces;
 using ShopDomain.Models;
 
 namespace ShopApp.Controllers;
@@ -8,24 +9,21 @@ namespace ShopApp.Controllers;
 // ім'я product береться з ProductController тільки маленькими і без Controller
 [ApiController]
 [Route("api/[controller]")]
-public class ProductController : ControllerBase
+public class ProductController(IProductService _productService) : ControllerBase
 {
-    private List<Product> _products = new();
+    //private List<Product> _products = new();
 
     [HttpGet("get")] //https://localhost:port/api/product/get
-    public List<Product> GetProducts()
+    public ActionResult<List<Product>> GetProducts()
     {
-        _products.Add(new Product()
-        {
-            Title = "Cheese",
-            Price = 55.34m
-        });
-        _products.Add(new Product()
-        {
-            Title = "Yogurt",
-            Price = 42.52m
-        });
+        var products = _productService.GetAllProducts();
+        return Ok(products);
+    }
 
-        return _products;
+    [HttpPost]
+    public IActionResult AddNewProduct([FromBody] Product product)
+    {
+        _productService.AddProduct(product);
+        return Ok("Product added successfully");
     }
 }
