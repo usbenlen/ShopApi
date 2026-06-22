@@ -1,4 +1,4 @@
-@ShopApp_HostAddress = http://localhost:5181
+@ShopApp_HostAddress = https://localhost:7250
 
 GET {{ShopApp_HostAddress}}/api/product/get
 
@@ -18,3 +18,7 @@ Content-Type: application/json
   "Title": "Pie",
   "Price": 52.42
 }
+
+### Lesson, task
+
+GET {{ShopApp_HostAddress}}/api/category

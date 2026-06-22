@@ -14,10 +14,9 @@ public class ProductController(IProductService _productService) : ControllerBase
     //private List<Product> _products = new();
 
     [HttpGet("get")] //https://localhost:port/api/product/get
-    public ActionResult<List<Product>> GetProducts()
+    public IActionResult GetProducts()
     {
-        var products = _productService.GetAllProducts();
-        return Ok(products);
+        return Ok(_productService.GetAllProducts());
     }
 
     [HttpPost]

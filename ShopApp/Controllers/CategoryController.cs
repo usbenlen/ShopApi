@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ShopApp.Interfaces;
 
 namespace ShopApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] //https://ip:port/api/category
-public class CategoryController : ControllerBase
+public class CategoryController(ICategoryService _categoryService) : ControllerBase
 {
     [HttpGet]
-    public IActionResult Test()
+    public IActionResult GetCategories()
     {
-        return Ok("Method Test"); // Status 200
+        return Ok(_categoryService.GetAllCategories());
     }
 }
