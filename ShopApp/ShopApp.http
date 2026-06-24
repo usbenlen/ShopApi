@@ -10,7 +10,7 @@ GET {{ShopApp_HostAddress}}/api/items
 
 GET {{ShopApp_HostAddress}}/api/items/40
 
-### Lesson, test
+### Lesson2, test
 
 POST https://e437-37-52-79-159.ngrok-free.app/api/product
 Content-Type: application/json
@@ -19,6 +19,29 @@ Content-Type: application/json
   "Price": 52.42
 }
 
-### Lesson, task
+### Lesson2, task
 
 GET {{ShopApp_HostAddress}}/api/category
+
+
+
+### Lesson3, task, user register
+POST {{ShopApp_HostAddress}}/api/user/register
+Content-Type: application/json
+{
+  "Id": 1,
+  "Login": "admin",
+  "Email": "admin@gmail.com",
+  "HashPassword": "123"
+}
+
+###
+
+POST {{ShopApp_HostAddress}}/api/user/register
+Content-Type: application/json
+{
+  "Id": 2,
+  "Login": "user",
+  "Email": "user@gmail.com",
+  "HashPassword": "123"
+}
