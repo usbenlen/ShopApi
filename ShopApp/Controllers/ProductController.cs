@@ -1,28 +1,65 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ShopApp.Filters;
 using ShopApp.Interfaces;
+using ShopApp.Models;
 using ShopDomain.Models;
 
 namespace ShopApp.Controllers;
 
-// https://localhost:port/product
-// https://localhost:port/api/product
-// ім'я product береться з ProductController тільки маленькими і без Controller
+// https://localhost:port/products
+// https://localhost:port/api/products
+// ім'я products береться з ProductController тільки маленькими і без Controller
 [ApiController]
 [Route("api/[controller]")]
-public class ProductController(IProductService _productService) : ControllerBase
+[LogActionFilter]
+public class ProductsController(IProductService _productService) : ControllerBase
 {
-    //private List<Product> _products = new();
-
-    [HttpGet("get")] //https://localhost:port/api/product/get
+    [HttpGet] //https://localhost:port/api/products/
     public IActionResult GetProducts()
     {
         return Ok(_productService.GetAllProducts());
     }
 
-    [HttpPost]
-    public IActionResult AddNewProduct([FromBody] Product product)
+    [HttpGet("{id}")]
+    public IActionResult Get(int id)
     {
-        _productService.AddProduct(product);
-        return Ok("Product added successfully");
+        var product = _productService.GetById(id);
+        if (product == null) return NotFound("Product not found");
+
+        return Ok(product);
+    }
+
+    [HttpPost]
+    public IActionResult Post(ProductDTO dto)
+    {
+        var product = _productService.Add(dto);
+
+        return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult Put(int id, ProductDTO dto)
+    {
+        var product = _productService.Update(id, dto);
+        if (product == null) return NotFound("Product not found");
+
+        return Ok(product);
+    }
+
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        bool deleted = _productService.Delete(id);
+        if (!deleted) return NotFound("Product not found");
+
+        return NoContent();
+    }
+
+    [HttpGet("search")]
+    public IActionResult Search(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
+
+        return Ok(_productService.Search(title));
     }
 }

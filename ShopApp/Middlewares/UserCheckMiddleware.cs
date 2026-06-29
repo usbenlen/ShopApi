@@ -19,25 +19,23 @@ public class UserMiddlewareCheck
         if (context.Request.Method != "POST" || !context.Request.Path.ToString().ToLower().Equals("/api/user/register"))
         {
             await _next(context);
-            return;
         }
 
         context.Request.EnableBuffering();
         var user = await JsonSerializer.DeserializeAsync<User>(context.Request.Body);
         context.Request.Body.Seek(0, SeekOrigin.Begin);
 
-        _logger.LogInformation($"User request received: {user.Id} | {user.Login}");
+        _logger.LogInformation($"User request received: {user?.Id} | {user?.Login}");
 
-        if (user != null && user?.Id == 1 && user.Login == "admin")
+        if (user != null && user.Id == 1 && user.Login == "admin")
         {
             _logger.LogInformation($"User authorized: {user.Id} | {user.Login}");
 
             await _next(context);
-            return;
         }
         else
         {
-            _logger.LogWarning($"Unauthorized access attempt: {user.Id} | {user.Login}");
+            _logger.LogWarning($"Unauthorized access attempt: {user?.Id} | {user?.Login}");
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new { message = "No authorization" });
         }
