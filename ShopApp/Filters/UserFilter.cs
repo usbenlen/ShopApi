@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using ShopDomain.Models;
+using Shop.Domain.Models;
 
-namespace ShopApp.Filters;
+namespace Shop.Api.Filters;
 
 public class UserFilter : ActionFilterAttribute
 {

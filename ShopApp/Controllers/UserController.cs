@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ShopApp.Filters;
-using ShopApp.Interfaces;
-using ShopDomain.Models;
+using Shop.Api.Filters;
+using Shop.Api.Interfaces;
+using Shop.Domain.Models;
 
-namespace ShopApp.Controllers;
+namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] //https://ip:port/api/user

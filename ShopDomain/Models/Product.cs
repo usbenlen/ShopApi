@@ -1,4 +1,4 @@
-﻿namespace ShopDomain.Models;
+﻿namespace Shop.Domain.Models;
 
 /// <summary>
 /// Модель продукту

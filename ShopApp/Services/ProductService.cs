@@ -1,8 +1,8 @@
-﻿using ShopApp.Interfaces;
-using ShopApp.Models;
-using ShopDomain.Models;
+﻿using Shop.Api.Interfaces;
+using Shop.Domain.Models;
+using Shop.Domain.DTOs;
 
-namespace ShopApp.Services;
+namespace Shop.Api.Services;
 
 public class ProductService : IProductService
 {

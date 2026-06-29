@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ShopApp.Models;
+namespace Shop.Domain.DTOs;
 
 /// <summary>
 /// DTO для створення та оновлення продукту

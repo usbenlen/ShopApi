@@ -1,9 +1,9 @@
 ﻿using Microsoft.OpenApi;
-using ShopApp.Interfaces;
-using ShopApp.Middleware;
-using ShopApp.Services;
+using Shop.Api.Interfaces;
+using Shop.Api.Middleware;
+using Shop.Api.Services;
 
-namespace ShopApp;
+namespace Shop.Api;
 
 public class Program
 {
@@ -16,9 +16,9 @@ public class Program
         {
             c.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Dz2",
+                Title = "Lesson4",
                 Version = "v1",
-                Description = "Task Dz2"
+                Description = "Lesson4 - EFCore"
             });
 
             var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -39,9 +39,9 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
-            app.UseSwaggerUI(c =>
+            app.UseSwaggerUI(c => 
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dz2");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Lesson4");
             });
         }
 

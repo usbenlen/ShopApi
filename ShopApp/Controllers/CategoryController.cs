@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ShopApp.Interfaces;
+using Shop.Api.Interfaces;
 
-namespace ShopApp.Controllers;
+namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] //https://ip:port/api/category

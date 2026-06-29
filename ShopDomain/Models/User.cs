@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ShopDomain.Models;
+namespace Shop.Domain.Models;
 
 public class User
 {
