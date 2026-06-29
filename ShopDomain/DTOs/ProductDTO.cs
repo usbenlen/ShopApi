@@ -2,9 +2,19 @@
 
 namespace ShopApp.Models;
 
+/// <summary>
+/// DTO для створення та оновлення продукту
+/// </summary>
 public class ProductDTO
 {
     [Required]
-    public string Title { get; set; } = string.Empty;
+    /// <summary>
+    /// Назва продукту
+    /// </summary>
+    public string? Title { get; set; }
+
+    /// <summary>
+    /// Ціна продукту
+    /// </summary>
     public decimal Price { get; set; }
 }
