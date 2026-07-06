@@ -34,4 +34,10 @@ DELETE {{ShopApp_HostAddress}}/api/products/1
 
 GET {{ShopApp_HostAddress}}/api/products/search?title=Laptop
 
+### Dz5
 
+GET {{ShopApp_HostAddress}}/api/category
+
+###
+
+GET {{ShopApp_HostAddress}}/api/category/2

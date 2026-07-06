@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Shop.Domain.DTOs;
+namespace Shop.Application.DTOs.ProductDTOs;
 
 /// <summary>
 /// DTO для створення та оновлення продукту
@@ -11,7 +11,7 @@ public class ProductDTO
     /// <summary>
     /// Назва продукту
     /// </summary>
-    public string? Title { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Ціна продукту

@@ -1,5 +1,5 @@
 ﻿using Shop.Domain.Models;
-using Shop.Domain.DTOs;
+using Shop.Application.DTOs.ProductDTOs;
 
 namespace Shop.Api.Interfaces;
 
@@ -10,5 +10,5 @@ public interface IProductService
     Product Add(ProductDTO dto);
     Product? Update(int id, ProductDTO dto);
     bool Delete(int id);
-    List<Product> Search(string title);
+    List<Product> Search(string name);
 }

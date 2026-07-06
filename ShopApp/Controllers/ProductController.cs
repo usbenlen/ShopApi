@@ -2,7 +2,7 @@
 using Shop.Api.Filters;
 using Shop.Api.Interfaces;
 using Shop.Domain.Models;
-using Shop.Domain.DTOs;
+using Shop.Application.DTOs.ProductDTOs;
 
 namespace Shop.Api.Controllers;
 
@@ -91,14 +91,14 @@ public class ProductsController(IProductService _productService) : ControllerBas
     /// <summary>
     /// Пошук товарів за назвою
     /// </summary>
-    /// <param name="title">Назва товару</param>
+    /// <param name="name">Назва товару</param>
     [HttpGet("search")]
     [ProducesResponseType(typeof(List<Product>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult Search(string? title)
+    public IActionResult Search(string? name)
     {
-        if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
+        if (string.IsNullOrWhiteSpace(name)) return BadRequest("Title is required");
 
-        return Ok(_productService.Search(title));
+        return Ok(_productService.Search(name));
     }
 }

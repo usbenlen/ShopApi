@@ -1,6 +1,6 @@
 ﻿using Shop.Api.Interfaces;
 using Shop.Domain.Models;
-using Shop.Domain.DTOs;
+using Shop.Application.DTOs.ProductDTOs;
 
 namespace Shop.Api.Services;
 
@@ -10,19 +10,19 @@ public class ProductService : IProductService
         new Product
         {
             Id = 1,
-            Title = "Milk",
+            Name = "Milk",
             Price = 40.2m
         },
         new Product
         {
             Id = 2,
-            Title = "Bread",
+            Name = "Bread",
             Price = 25.7m
         },
         new Product
         {
             Id = 3,
-            Title = "Cheese",
+            Name = "Cheese",
             Price = 95.3m
         }
     ];
@@ -44,9 +44,9 @@ public class ProductService : IProductService
         Product product = new Product
         {
             Id = id,
-            Title = dto.Title,
+            Name = dto.Name,
             Price = dto.Price
-        };
+        };  
 
         _products.Add(product);
 
@@ -58,7 +58,7 @@ public class ProductService : IProductService
         Product? product = GetById(id);
         if (product == null) return null;
 
-        product.Title = dto.Title;
+        product.Name = dto.Name;
         product.Price = dto.Price;
 
         return product;
@@ -74,8 +74,8 @@ public class ProductService : IProductService
         return true;
     }
 
-    public List<Product> Search(string title)
+    public List<Product> Search(string name)
     {
-        return _products.Where(x => x.Title.ToLower().Contains(title.ToLower())).ToList();
+        return _products.Where(x => x.Name.ToLower().Contains(name.ToLower())).ToList();
     }
 }
