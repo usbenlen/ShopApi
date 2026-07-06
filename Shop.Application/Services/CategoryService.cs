@@ -50,4 +50,24 @@ public class CategoryService(ICategoryRepository _repository) : ICategoryService
             ImageURL = category.ImageURL
         };
     }
+
+    public async Task<bool> DeleteCategoryAsync(int id)
+    {
+        return await _repository.DeleteCategoryAsync(id);
+    }
+
+    public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto)
+    {
+        var category = new Category
+        {
+            Id = id,
+            Name = dto.Name,
+            Slug = dto.Slug,
+            Description = dto.Description,
+            ImageURL = dto.ImageURL,
+            ParentId = dto.ParentId
+        };
+
+        return await _repository.UpdateCategoryAsync(category);
+    }
 }

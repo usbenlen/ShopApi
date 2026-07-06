@@ -27,9 +27,9 @@ public class Program
         {
             c.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Dz5",
+                Title = "Dz6",
                 Version = "v1",
-                Description = "Dz5 - EFCore"
+                Description = "Dz6 - EFCore"
             });
 
             var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -76,7 +76,7 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI(c => 
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dz5");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dz6");
             });
         }
         //Дозволити між-доменні запити
