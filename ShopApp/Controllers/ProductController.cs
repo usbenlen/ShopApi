@@ -1,104 +1,88 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Shop.Api.Filters;
 using Shop.Api.Interfaces;
-using Shop.Domain.Models;
+using Shop.Api.Requests.Products;
 using Shop.Application.DTOs.ProductDTOs;
+using Shop.Application.Interfaces.Services;
 
 namespace Shop.Api.Controllers;
 
-// https://localhost:port/products
-// https://localhost:port/api/products
-// ім'я products береться з ProductController тільки маленькими і без Controller
-
-/// <summary>
-/// Контролер для роботи з продуктами
-/// </summary>
+/// <summary>Контролер для роботи з продуктами</summary>
 [ApiController]
 [Route("api/[controller]")]
 [LogActionFilter]
-public class ProductsController(IProductService _productService) : ControllerBase
+public class ProductsController(IProductService _productService, IImageService _imageService, IConfiguration _configuration) : ControllerBase
 {
-    /// <summary>
-    /// Отримати список усіх продуктів
-    /// </summary>
-    [HttpGet] //https://localhost:port/api/products/
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult GetProducts()
+    /// <summary>Створити новий продукт разом із фотографіями</summary>
+    /// <param name="dto">Дані продукту та файли зображень</param>
+    /// <returns>Ідентифікатор створеного продукту</returns>
+    [HttpPost]
+    public async Task<IActionResult> Create([FromForm] ProductCreateRequest dto)
     {
-        return Ok(_productService.GetAllProducts());
+        int maxImages = _configuration.GetValue<int>("ProductSettings:MaxImages");
+        if (dto.ImagesFiles.Count > maxImages) return BadRequest($"Maximum allowed images: {maxImages}");
+
+        dto.Images = [];
+
+        foreach (var file in dto.ImagesFiles)
+        {
+            string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"]);
+
+            if (!string.IsNullOrEmpty(url)) dto.Images.Add(url);
+        }
+
+        int? id = await _productService.CreateProductAsync(dto);
+
+        return Ok($"Product created {id}");
     }
 
-    /// <summary>
-    /// Отримати товар за ID
-    /// </summary>
-    /// <param name="id">Ідентифікатор продукту</param>
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(Product), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult Get(int id)
+    /// <summary>Отримати список усіх продуктів</summary>
+    /// <returns>Список продуктів</returns>
+    [HttpGet]
+    public async Task<IActionResult> GetProducts()
     {
-        var product = _productService.GetById(id);
+        var products = await _productService.GetProductsAsync();
+        return Ok(products);
+    }
+
+
+
+    /// <summary>Отримати продукт за ID</summary>
+    /// <param name="id">Ідентифікатор продукту</param>
+    /// <returns>Продукт або NotFound</returns>
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetProductById(int id)
+    {
+        var product = await _productService.GetProductByIdAsync(id);
         if (product == null) return NotFound("Product not found");
 
         return Ok(product);
     }
 
-    /// <summary>
-    /// Додати новий продукт
-    /// </summary>
-    /// <param name="dto">Дані нового продукту</param>
-    [HttpPost]
-    [ProducesResponseType(typeof(Product), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult Post(ProductDTO dto)
-    {
-        var product = _productService.Add(dto);
 
-        return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
-    }
-
-    /// <summary>
-    /// Оновити існуючий продукт
-    /// </summary>
+    // ПОФІКСИТИ ОНОВЛЕННЯ ПРОДУКТУ (Щоб якщо я лишаю рядок пустим то щоб цей рядок лишився таким яким і був)
+    /// <summary>Оновити існуючий продукт</summary>
     /// <param name="id">Ідентифікатор продукту</param>
     /// <param name="dto">Нові дані продукту</param>
+    /// <returns>Результат оновлення</returns>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(Product), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult Put(int id, ProductDTO dto)
+    public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateDTO dto)
     {
-        var product = _productService.Update(id, dto);
-        if (product == null) return NotFound("Product not found");
+        bool updated = await _productService.UpdateProductAsync(id, dto);
+        if (!updated) return NotFound("Product not found");
 
-        return Ok(product);
+        return Ok("Product updated");
     }
 
-    /// <summary>
-    /// Видалити продукт
-    /// </summary>
+    /// <summary>Видалити продукт</summary>
     /// <param name="id">Ідентифікатор продукту</param>
+    /// <returns>Результат видалення</returns>
     [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> DeleteProduct(int id)
     {
-        bool deleted = _productService.Delete(id);
+        bool deleted = await _productService.DeleteProductAsync(id);
         if (!deleted) return NotFound("Product not found");
 
         return NoContent();
-    }
-
-    /// <summary>
-    /// Пошук товарів за назвою
-    /// </summary>
-    /// <param name="name">Назва товару</param>
-    [HttpGet("search")]
-    [ProducesResponseType(typeof(List<Product>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult Search(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return BadRequest("Title is required");
-
-        return Ok(_productService.Search(name));
     }
 }

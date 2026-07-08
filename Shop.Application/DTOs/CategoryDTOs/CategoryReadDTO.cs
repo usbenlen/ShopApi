@@ -14,4 +14,5 @@ public class CategoryReadDTO
     public int? ParentId { get; set; } = null;
     public string Description { get; set; } = string.Empty;
     public string ImageURL { get; set; } = string.Empty;
+    public ICollection<int>? Products { get; set; }
 }

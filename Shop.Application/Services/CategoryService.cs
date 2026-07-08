@@ -1,38 +1,27 @@
-﻿using Shop.Application.DTOs.CategoryDTOs;
+﻿using AutoMapper;
+using Shop.Application.DTOs.CategoryDTOs;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Domain.Models;
 
 namespace Shop.Application.Services;
 
-public class CategoryService(ICategoryRepository _repository) : ICategoryService
+public class CategoryService(ICategoryRepository _repository, IMapper _mapper) : ICategoryService
 {
     public async Task<int?> CreateCategoryAsync(CategoryCreateDTO dto)
     {
-        //TODO: додати AutoMapper
-        return await _repository.CreateCategoryAsync(new Category()
-        {
-            Name = dto.Name,
-            Slug = dto.Slug,
-            ImageURL = dto.ImageURL,
-            Description = dto.Description,
-            ParentId = dto.ParentId,
-        });
+        var category = _mapper.Map<Category>(dto);
+        return await _repository.CreateCategoryAsync(category);
     }
 
     public async Task<IReadOnlyList<CategoryReadDTO>> GetCategoriesAsync()
     {
         var categories = await _repository.GetCategoriesAsync();
+        List<CategoryReadDTO>? dtos = null;
 
-        return categories.Select(c => new CategoryReadDTO
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Slug = c.Slug,
-            ParentId = c.ParentId,
-            Description = c.Description,
-            ImageURL = c.ImageURL
-        }).ToArray();
+        if (categories != null && categories.Count > 0) dtos = _mapper.Map<List<CategoryReadDTO>>(categories);
+
+        return dtos;
     }
 
     public async Task<CategoryReadDTO?> GetCategoryByIdAsync(int id)
@@ -40,15 +29,7 @@ public class CategoryService(ICategoryRepository _repository) : ICategoryService
         var category = await _repository.GetCategoryByIdAsync(id);
         if (category == null) return null;
 
-        return new CategoryReadDTO
-        {
-            Id = category.Id,
-            Name = category.Name,
-            Slug = category.Slug,
-            ParentId = category.ParentId,
-            Description = category.Description,
-            ImageURL = category.ImageURL
-        };
+        return _mapper.Map<CategoryReadDTO>(category);
     }
 
     public async Task<bool> DeleteCategoryAsync(int id)
@@ -56,18 +37,10 @@ public class CategoryService(ICategoryRepository _repository) : ICategoryService
         return await _repository.DeleteCategoryAsync(id);
     }
 
+    //Пофіксити (так само у product)
     public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto)
     {
-        var category = new Category
-        {
-            Id = id,
-            Name = dto.Name,
-            Slug = dto.Slug,
-            Description = dto.Description,
-            ImageURL = dto.ImageURL,
-            ParentId = dto.ParentId
-        };
-
+        var category = _mapper.Map<Category>(dto);
         return await _repository.UpdateCategoryAsync(category);
     }
 }

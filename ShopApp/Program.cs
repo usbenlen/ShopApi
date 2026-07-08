@@ -1,11 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using Shop.Api.Interfaces;
 using Shop.Api.Middleware;
-using Shop.Infrastructure.Data;
-using Shop.Infrastructure.Repository;
+using Shop.Api.Services;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
+using Shop.Application.Mapping;
 using Shop.Application.Services;
+using Shop.Infrastructure.Data;
+using Shop.Infrastructure.Repository;
 
 namespace Shop.Api;
 
@@ -27,9 +30,9 @@ public class Program
         {
             c.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Dz6",
+                Title = "Dz7",
                 Version = "v1",
-                Description = "Dz6 - EFCore"
+                Description = "Dz7 - EFCore"
             });
 
             var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -37,6 +40,12 @@ public class Program
 
             c.IncludeXmlComments(xmlPath);
         });
+
+        // -- AutoMapper --
+        builder.Services.AddAutoMapper(
+            _ => { },
+            typeof(CategoryProfile).Assembly
+        );
 
         // -- CORS (Дозволити запити з усіх сайтів до серверу (Але бажано додати білий список)) --
         builder.Services.AddCors(options =>
@@ -54,17 +63,14 @@ public class Program
         builder.Services.AddControllers();
 
         // -- Services --
-        //builder.Services.AddScoped<IProductService, ProductService>(); // При кожному запиті створюється новий екземпляр об'єкту. (Тобто сервіс не збереже останні POST запити (безпечно)).
+        builder.Services.AddScoped<IProductService, ProductService>(); // При кожному запиті створюється новий екземпляр об'єкту. (Тобто сервіс не збереже останні POST запити (безпечно)).
         //builder.Services.AddSingleton<IProductService, ProductService>(); // При кожному запиті лишається той самий об'єкт (Сервіс збереже POST запити, для деяких випадків корисно, і потрібно (Дещо небезпечно)).
-        //builder.Services.AddSingleton<ICategoryService, CategoryService>();
-        //builder.Services.AddSingleton<IUserService, UserService>();
-
-        //Lesson7
-        //builder.Services.AddScoped<IProductService, ProductService>();
         builder.Services.AddScoped<ICategoryService, CategoryService>();
+        builder.Services.AddScoped<IImageService, ImageService>();
 
         // -- Repositories --
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+        builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 
         //
@@ -76,16 +82,17 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI(c => 
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dz6");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dz7");
             });
         }
         //Дозволити між-доменні запити
         app.UseCors("AllowAll");
 
-        app.MapControllers();
         //app.UseMiddleware<RequestTimerMiddleware>();
         //app.UseMiddleware<UserMiddlewareCheck>();
-        //app.UseStaticFiles(); //Доступ до папки wwwroot/images
+        app.UseStaticFiles(); //Доступ до папки wwwroot/images
+
+        app.MapControllers();
 
         app.Run();
     }

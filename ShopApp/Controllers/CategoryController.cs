@@ -1,18 +1,36 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.DTOs.CategoryDTOs;
+using Shop.Api.Requests.Categories;
+using Shop.Api.Interfaces;
 
 namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] //https://ip:port/api/category
-public class CategoryController(ICategoryService _categoryService) : ControllerBase
+public class CategoryController(ICategoryService _categoryService, IImageService _imageService, IConfiguration _configuration) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> CreateCategory([FromBody] CategoryCreateDTO dto)
+    public async Task<IActionResult> CreateCategory([FromForm] CategoryCreateRequest dto)
     {
-        int? id = await _categoryService.CreateCategoryAsync(dto);
+        if (dto.Image != null) 
+            dto.ImageURL = (await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"])) ?? string.Empty;
+
+        var createDTO = new CategoryCreateDTO
+        {
+            Name = dto.Name,
+            Slug = dto.Slug,
+            Description = dto.Description,
+            ImageURL = dto.ImageURL,
+            ParentId = dto.ParentId,
+        };
+
+        int? id = await _categoryService.CreateCategoryAsync(createDTO);
         return Ok($"Category created {id}"); // 200 status
+        //return CreatedAtAction(
+        //    nameof(GetCategoryById), // назва методу
+        //    new { id }, // параметри маршруту
+        //    new { id }); // тіло відповіді
     }
 
     [HttpGet]
