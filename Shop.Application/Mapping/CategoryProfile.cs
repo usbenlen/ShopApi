@@ -14,5 +14,7 @@ public class CategoryProfile : Profile
         CreateMap<CategoryCreateDTO, Category>(); //1. з чого перетворити: CategoryCreateDTO -> 2. на що перетворити: Category
         CreateMap<Category, CategoryReadDTO>().ForMember(dest => dest.Products,
             opt => opt.MapFrom(src => src.Products.Select(p => p.Id).ToList()));
+        CreateMap<CategoryUpdateDTO, Category>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     }
 }

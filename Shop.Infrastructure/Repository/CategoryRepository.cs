@@ -31,6 +31,11 @@ public class CategoryRepository(ShopDbContext _context) : ICategoryRepository
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
+    public async Task<Category?> GetCategoryForUpdateAsync(int id)
+    {
+        return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+    }
+
     public async Task<bool> DeleteCategoryAsync(int id)
     {
         var category = await _context.Categories.FindAsync(id);
@@ -45,14 +50,14 @@ public class CategoryRepository(ShopDbContext _context) : ICategoryRepository
 
     public async Task<bool> UpdateCategoryAsync(Category category)
     {
-        var existing = await _context.Categories.FindAsync(category.Id);
-        if (existing == null) return false;
+        //var existing = await _context.Categories.FindAsync(category.Id);
+        //if (existing == null) return false;
 
-        existing.Name = category.Name;
-        existing.Slug = category.Slug;
-        existing.Description = category.Description;
-        existing.ImageURL = category.ImageURL;
-        existing.ParentId = category.ParentId;
+        //existing.Name = category.Name;
+        //existing.Slug = category.Slug;
+        //existing.Description = category.Description;
+        //existing.ImageURL = category.ImageURL;
+        //existing.ParentId = category.ParentId;
 
         await _context.SaveChangesAsync();
 

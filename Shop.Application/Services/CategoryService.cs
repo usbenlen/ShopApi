@@ -40,7 +40,11 @@ public class CategoryService(ICategoryRepository _repository, IMapper _mapper) :
     //Пофіксити (так само у product)
     public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto)
     {
-        var category = _mapper.Map<Category>(dto);
+        var category = await _repository.GetCategoryForUpdateAsync(id);
+        if (category == null) return false;
+
+        _mapper.Map(dto, category);
+
         return await _repository.UpdateCategoryAsync(category);
     }
 }
