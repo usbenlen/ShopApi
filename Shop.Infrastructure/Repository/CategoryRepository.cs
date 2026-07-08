@@ -2,9 +2,6 @@
 using Shop.Application.Interfaces.Repository;
 using Shop.Domain.Models;
 using Shop.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Shop.Infrastructure.Repository;
 
@@ -50,17 +47,7 @@ public class CategoryRepository(ShopDbContext _context) : ICategoryRepository
 
     public async Task<bool> UpdateCategoryAsync(Category category)
     {
-        //var existing = await _context.Categories.FindAsync(category.Id);
-        //if (existing == null) return false;
-
-        //existing.Name = category.Name;
-        //existing.Slug = category.Slug;
-        //existing.Description = category.Description;
-        //existing.ImageURL = category.ImageURL;
-        //existing.ParentId = category.ParentId;
-
         await _context.SaveChangesAsync();
-
         return true;
     }
 }

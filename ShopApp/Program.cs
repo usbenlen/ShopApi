@@ -1,12 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Shop.Api.Interfaces;
-using Shop.Api.Middleware;
+//using Shop.Api.Middleware;
 using Shop.Api.Services;
+using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Mapping;
 using Shop.Application.Services;
+using Shop.Domain.Models;
 using Shop.Infrastructure.Data;
 using Shop.Infrastructure.Repository;
 
@@ -46,6 +49,7 @@ public class Program
             _ => { },
             typeof(CategoryProfile).Assembly
         );
+
 
         // -- CORS (Дозволити запити з усіх сайтів до серверу (Але бажано додати білий список)) --
         builder.Services.AddCors(options =>

@@ -7,7 +7,7 @@ namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] //https://ip:port/api/user
-[UserFilter]
+//[UserFilter]
 public class UserController(IUserService _userService) : ControllerBase
 {
     [HttpPost("register")]

@@ -37,7 +37,6 @@ public class CategoryService(ICategoryRepository _repository, IMapper _mapper) :
         return await _repository.DeleteCategoryAsync(id);
     }
 
-    //Пофіксити (так само у product)
     public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto)
     {
         var category = await _repository.GetCategoryForUpdateAsync(id);

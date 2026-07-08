@@ -1,4 +1,5 @@
-﻿using Shop.Application.DTOs.ProductDTOs;
+﻿using AutoMapper;
+using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Domain.Models;
@@ -8,22 +9,20 @@ namespace Shop.Application.Services;
 /// <summary>
 /// Сервіс для бізнес-логіки роботи з продуктами
 /// </summary>
-public class ProductService(IProductRepository _repository) : IProductService
+public class ProductService(IProductRepository _repository, IMapper _mapper) : IProductService
 {
 
     /// <inheritdoc/>
     public async Task<int?> CreateProductAsync(ProductCreateDTO dto)
     {
-        Product product = new()
-        {
-            Name = dto.Name,
-            Price = dto.Price,
-            Description = dto.Description,
-            StockQty = dto.StockQty,
-            IsActive = dto.IsActive,
-            CategoryId = dto.CategoryId,
-            Images = dto.Images.Select(x => new ProductImage { Url = x }).ToList()
-        };
+
+        Console.WriteLine(dto.GetType().FullName);
+        Product product = _mapper.Map<Product>(dto);
+
+        product.Images = dto.Images.Select(x => new ProductImage
+            {
+                Url = x
+            }).ToList();
 
         return await _repository.CreateProductAsync(product);
     }
@@ -33,17 +32,7 @@ public class ProductService(IProductRepository _repository) : IProductService
     {
         var products = await _repository.GetProductsAsync();
 
-        return products.Select(p => new ProductReadDTO
-        {
-            Id = p.Id,
-            Name = p.Name,
-            Price = p.Price,
-            Description = p.Description,
-            StockQty = p.StockQty,
-            IsActive = p.IsActive,
-            CategoryId = p.CategoryId,
-            Images = p.Images.Select(i => i.Url).ToList()
-        }).ToArray();
+        return _mapper.Map<List<ProductReadDTO>>(products);
     }
 
     /// <inheritdoc/>
@@ -52,17 +41,7 @@ public class ProductService(IProductRepository _repository) : IProductService
         var product = await _repository.GetProductByIdAsync(id);
         if (product == null) return null;
 
-        return new ProductReadDTO
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Price = product.Price,
-            Description = product.Description,
-            StockQty = product.StockQty,
-            IsActive = product.IsActive,
-            CategoryId = product.CategoryId,
-            Images = product.Images.Select(i => i.Url).ToList()
-        };
+        return _mapper.Map<ProductReadDTO>(product);
     }
 
     /// <inheritdoc/>
@@ -74,21 +53,22 @@ public class ProductService(IProductRepository _repository) : IProductService
     /// <inheritdoc/>
     public async Task<bool> UpdateProductAsync(int id, ProductUpdateDTO dto)
     {
-        Product product = new()
+        var product = await _repository.GetProductForUpdateAsync(id);
+        if (product == null) return false;
+
+        _mapper.Map(dto, product);
+
+        if (dto.Images != null)
         {
-            Id = id,
-            Name = dto.Name,
-            Price = dto.Price,
-            Description = dto.Description,
-            StockQty = dto.StockQty,
-            IsActive = dto.IsActive,
-            CategoryId = dto.CategoryId,
-            Images = dto.Images.Select(x => new ProductImage
+            product.Images.Clear();
+
+            foreach (var image in dto.Images)
+                product.Images.Add(new ProductImage
                 {
-                    Url = x,
+                    Url = image,
                     ProductId = id
-                }).ToList()
-        };
+                });
+        }
 
         return await _repository.UpdateProductAsync(product);
     }

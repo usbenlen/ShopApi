@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.Interfaces.Repository;
 using Shop.Domain.Models;
 using Shop.Infrastructure.Data;
@@ -38,6 +39,13 @@ public class ProductRepository(ShopDbContext _context) : IProductRepository
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 
+    public async Task<Product?> GetProductForUpdateAsync(int id)
+    {
+        return await _context.Products
+            .Include(x => x.Images)
+            .FirstOrDefaultAsync(x => x.Id == id);
+    }
+
     /// <inheritdoc/>
     public async Task<bool> DeleteProductAsync(int id)
     {
@@ -54,28 +62,7 @@ public class ProductRepository(ShopDbContext _context) : IProductRepository
     /// <inheritdoc/>
     public async Task<bool> UpdateProductAsync(Product product)
     {
-        var existing = await _context.Products
-            .Include(x => x.Images)
-            .FirstOrDefaultAsync(x => x.Id == product.Id);
-
-        if (existing == null) return false;
-
-        existing.Name = product.Name;
-        existing.Price = product.Price;
-        existing.Description = product.Description;
-        existing.StockQty = product.StockQty;
-        existing.IsActive = product.IsActive;
-        existing.CategoryId = product.CategoryId;
-
-        //видаляємо старі фото
-        _context.ProductImages.RemoveRange(existing.Images);
-        existing.Images.Clear();
-
-        //додаєм нові
-        foreach (var image in product.Images) existing.Images.Add(image);
-
         await _context.SaveChangesAsync();
-
         return true;
     }
 }

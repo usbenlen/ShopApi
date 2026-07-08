@@ -31,7 +31,18 @@ public class ProductsController(IProductService _productService, IImageService _
             if (!string.IsNullOrEmpty(url)) dto.Images.Add(url);
         }
 
-        int? id = await _productService.CreateProductAsync(dto);
+        var productDto = new ProductCreateDTO
+        {
+            Name = dto.Name,
+            Price = dto.Price,
+            Description = dto.Description,
+            StockQty = dto.StockQty,
+            IsActive = dto.IsActive,
+            CategoryId = dto.CategoryId,
+            Images = dto.Images
+        };
+
+        int? id = await _productService.CreateProductAsync(productDto);
 
         return Ok($"Product created {id}");
     }
@@ -59,15 +70,24 @@ public class ProductsController(IProductService _productService, IImageService _
         return Ok(product);
     }
 
-
-    // ПОФІКСИТИ ОНОВЛЕННЯ ПРОДУКТУ (Щоб якщо я лишаю рядок пустим то щоб цей рядок лишився таким яким і був)
     /// <summary>Оновити існуючий продукт</summary>
     /// <param name="id">Ідентифікатор продукту</param>
     /// <param name="dto">Нові дані продукту</param>
     /// <returns>Результат оновлення</returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateDTO dto)
+    public async Task<IActionResult> UpdateProduct(int id, [FromForm] ProductUpdateRequest dto)
     {
+        if (dto.ImagesFiles != null && dto.ImagesFiles.Count > 0)
+        {
+            dto.Images = [];
+
+            foreach (var file in dto.ImagesFiles)
+            {
+                string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"]);
+                if (!string.IsNullOrEmpty(url)) dto.Images.Add(url);
+            }
+        }
+
         bool updated = await _productService.UpdateProductAsync(id, dto);
         if (!updated) return NotFound("Product not found");
 

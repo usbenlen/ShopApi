@@ -25,7 +25,8 @@ public interface IProductRepository
     /// </summary>
     /// <param name="id">Ідентифікатор продукту</param>
     /// <returns>Продукт або null</returns>
-    Task<Product?> GetProductByIdAsync(int id);
+    Task<Product?> GetProductByIdAsync(int id); // Для читання (AsNoTracking)
+    Task<Product?> GetProductForUpdateAsync(int id); // Для оновлення (без AsNoTracking)
 
     /// <summary>
     /// Видаляє продукт

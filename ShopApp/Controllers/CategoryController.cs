@@ -60,10 +60,16 @@ public class CategoryController(ICategoryService _categoryService, IImageService
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryUpdateDTO dto)
+    public async Task<IActionResult> UpdateCategory(int id, [FromForm] CategoryUpdateRequest dto)
     {
+        if (dto.Image != null)
+        {
+            string? url = await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"]);
+            dto.ImageURL = url;
+        }
+
         bool updated = await _categoryService.UpdateCategoryAsync(id, dto);
-        if (!updated) return NotFound();
+        if (!updated) return NotFound("Category not found");
 
         return Ok("Category updated");
     }
