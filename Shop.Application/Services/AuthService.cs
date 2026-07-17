@@ -32,6 +32,26 @@ public class AuthService(IMapper _mapper, IAuthRepository _repository, IHashHelp
         return (_mapper.Map<UserReadDTO>(user), accessToken, refreshTokenDTO);
     }
 
+    public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> LoginAsync(UserLoginDTO dto)
+    {
+        var user = await _repository.GetByEmailAsync(dto.Email);
+        if (user == null) return null;
+        if (!_hashHelper.IsPasswordValid(dto.Password, user.PasswordHash)) return null;
+
+        var accessToken = _jwtService.GenerateAccessToken(_mapper.Map<UserTokenDTO>(user));
+
+        var refreshToken = _refreshTokenService.GenerateRefreshToken(user.Id);
+        await _refreshTokenRepository.AddAsync(refreshToken);
+
+        var refreshTokenDTO = new RefreshTokenDTO
+        {
+            Token = refreshToken.Token,
+            ExpiresAt = refreshToken.ExpiresAt
+        };
+
+        return (accessToken, refreshTokenDTO);
+    }
+
     public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> RefreshAsync(string token)
     {
         var oldRefreshToken = await _refreshTokenRepository.GetByTokenAsync(token);

@@ -18,4 +18,9 @@ public class AuthRepository(ShopDbContext _context) : IAuthRepository
 
         return user;
     }
+
+    public async Task<User?> GetByEmailAsync(string email)
+    {
+        return await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+    }
 }
