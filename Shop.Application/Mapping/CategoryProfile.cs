@@ -25,5 +25,7 @@ public class CategoryProfile : Profile
 
                 return true;
             }));
+
+        CreateMap<Category, CategoryTreeDTO>();
     }
 }

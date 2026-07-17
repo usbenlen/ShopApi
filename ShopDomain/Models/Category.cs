@@ -30,7 +30,7 @@ public class Category : BaseEntity
 
     [MaxLength(100)]
     [Column("description")]
-    public string Description { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty; //Опис вже не дуже треба (потім видалити)
 
     [Column("url")]
     public string ImageURL { get; set; } = string.Empty;

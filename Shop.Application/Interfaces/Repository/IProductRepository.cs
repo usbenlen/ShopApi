@@ -40,5 +40,5 @@ public interface IProductRepository
     /// </summary>
     /// <param name="product">Оновлений продукт</param>
     /// <returns>True, якщо продукт успішно оновлено</returns>
-    Task<bool> UpdateProductAsync(Product product);
+    Task<bool> UpdateProductAsync();
 }

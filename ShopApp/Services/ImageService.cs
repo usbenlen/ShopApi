@@ -18,6 +18,6 @@ public class ImageService(IWebHostEnvironment _environment) : IImageService
         await using var stream = new FileStream(filePath, FileMode.Create);
         await file.CopyToAsync(stream);
 
-        return $"/{folderName}/{fileName}";
+        return $"{fileName}";
     }
 }

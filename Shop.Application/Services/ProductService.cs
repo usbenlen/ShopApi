@@ -70,6 +70,6 @@ public class ProductService(IProductRepository _repository, IMapper _mapper) : I
                 });
         }
 
-        return await _repository.UpdateProductAsync(product);
+        return await _repository.UpdateProductAsync();
     }
 }

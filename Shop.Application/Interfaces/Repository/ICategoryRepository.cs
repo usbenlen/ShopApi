@@ -1,4 +1,5 @@
-﻿using Shop.Domain.Models;
+﻿using Shop.Application.DTOs.CategoryDTOs;
+using Shop.Domain.Models;
 
 namespace Shop.Application.Interfaces.Repository;
 
@@ -9,6 +10,9 @@ public interface ICategoryRepository
     Task<Category?> GetCategoryByIdAsync(int id); // Для читання (AsNoTracking)
     Task<Category?> GetCategoryForUpdateAsync(int id); // Для оновлення (без AsNoTracking)
     Task<bool> DeleteCategoryAsync(int id);
-    Task<bool> UpdateCategoryAsync(Category category);
+    Task<bool> UpdateCategoryAsync();
+    Task<IReadOnlyList<Category>> GetParentCategoriesAsync(int id);
+    Task<IReadOnlyList<Category>> GetChildCategoriesAsync(int id);
+    Task<Category?> GetCategoryTreeAsync(int id);
 
 }

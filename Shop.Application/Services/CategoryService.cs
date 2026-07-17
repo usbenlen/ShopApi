@@ -44,6 +44,26 @@ public class CategoryService(ICategoryRepository _repository, IMapper _mapper) :
 
         _mapper.Map(dto, category);
 
-        return await _repository.UpdateCategoryAsync(category);
+        return await _repository.UpdateCategoryAsync();
+    }
+
+    public async Task<IReadOnlyList<CategoryReadDTO>> GetParentCategoriesAsync(int id)
+    {
+        var categories = await _repository.GetParentCategoriesAsync(id);
+        return _mapper.Map<List<CategoryReadDTO>>(categories);
+    }
+
+    public async Task<IReadOnlyList<CategoryReadDTO>> GetChildCategoriesAsync(int id)
+    {
+        var categories = await _repository.GetChildCategoriesAsync(id);
+        return _mapper.Map<List<CategoryReadDTO>>(categories);
+    }
+
+    public async Task<CategoryTreeDTO?> GetCategoryTreeAsync(int id)
+    {
+        var category = await _repository.GetCategoryTreeAsync(id);
+        if (category == null) return null;
+
+        return _mapper.Map<CategoryTreeDTO>(category);
     }
 }

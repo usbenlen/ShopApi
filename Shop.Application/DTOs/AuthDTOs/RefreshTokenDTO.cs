@@ -1,0 +1,7 @@
+﻿namespace Shop.Application.DTOs.AuthDTOs;
+
+public class RefreshTokenDTO
+{
+    public string Token { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+}

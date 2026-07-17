@@ -60,7 +60,7 @@ public class ProductRepository(ShopDbContext _context) : IProductRepository
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateProductAsync(Product product)
+    public async Task<bool> UpdateProductAsync()
     {
         await _context.SaveChangesAsync();
         return true;
