@@ -14,6 +14,7 @@ public class ShopDbContext : DbContext
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     // Автоматично встановлює CreatedAt і UpdatedAt перед збереженням
     public override int SaveChanges()
@@ -64,6 +65,17 @@ public class ShopDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Email).IsUnique();
+        });
+
+        // --- PasswordResetToken ---
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+
+            entity.HasOne(x => x.User)
+                  .WithMany()
+                  .HasForeignKey(x => x.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // --- Category ---

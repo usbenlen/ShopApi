@@ -21,7 +21,7 @@ namespace Shop.Api;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -78,6 +78,12 @@ public class Program
             ?? throw new Exception("JWT settings not configured");
 
         builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("JWT"));
+        
+        // -- Email Configuration --
+        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+
+        // -- Admin Seed Configuration --
+        builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection("AdminSeed"));
 
         // -- CORS (Дозволити запити з усіх сайтів до серверу (Але бажано додати білий список)) --
         builder.Services.AddCors(options =>
@@ -101,6 +107,9 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IJWTService, JWTService>();
         builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IPasswordService, PasswordService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
 
         // -- Helpers --
         builder.Services.AddSingleton<IHashHelper, HashHelper>();
@@ -110,6 +119,8 @@ public class Program
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
         // -- Authentication --
         builder.Services.AddAuthentication(options =>
@@ -155,6 +166,8 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        await AdminSeeder.SeedAsync(app.Services);
 
         //app.UseMiddleware<RequestTimerMiddleware>();
         //app.UseMiddleware<UserMiddlewareCheck>();

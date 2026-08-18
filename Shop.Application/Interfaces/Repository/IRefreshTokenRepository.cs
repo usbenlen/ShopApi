@@ -4,7 +4,8 @@ namespace Shop.Application.Interfaces.Repository;
 
 public interface IRefreshTokenRepository
 {
-    Task AddAsync(RefreshToken refreshToken);
-    Task UpdateAsync(RefreshToken refreshToken);
-    Task<RefreshToken?> GetByTokenAsync(string token);
+    Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
+    Task UpdateAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
+    Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default);
+    Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

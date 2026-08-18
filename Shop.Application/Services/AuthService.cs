@@ -7,21 +7,34 @@ using Shop.Application.Interfaces.Services;
 
 namespace Shop.Application.Services;
 
-public class AuthService(IMapper _mapper, IAuthRepository _repository, IHashHelper _hashHelper, IJWTService _jwtService, IRefreshTokenService _refreshTokenService, IRefreshTokenRepository _refreshTokenRepository) : IAuthService
+public class AuthService(
+    IMapper mapper,
+    IAuthRepository repository,
+    IHashHelper hashHelper,
+    IJWTService jwtService,
+    IRefreshTokenService refreshTokenService,
+    IRefreshTokenRepository refreshTokenRepository)
+    : IAuthService
 {
     public async Task<(UserReadDTO? User, string? AccessToken, RefreshTokenDTO? RefreshToken)> RegisterAsync(UserCreateDTO dto, CancellationToken cancellationToken = default)
     {
-        if (await _repository.IsEmailInUseAsync(dto.Email)) return (null, null, null);
+        var email = NormalizeEmail(dto.Email);
 
-        var user = _mapper.Map<User>(dto);
-        user.PasswordHash = _hashHelper.Hash(dto.Password);
+        if (await repository.IsEmailInUseAsync(email))
+            return (null, null, null);
 
-        await _repository.RegisterUserAsync(user);
+        var user = mapper.Map<User>(dto);
 
-        var accessToken = _jwtService.GenerateAccessToken(_mapper.Map<UserTokenDTO>(user));
+        user.Email = email;
+        user.PasswordHash = hashHelper.Hash(dto.Password);
 
-        var refreshToken = _refreshTokenService.GenerateRefreshToken(user.Id);
-        await _refreshTokenRepository.AddAsync(refreshToken);
+        await repository.RegisterUserAsync(user);
+
+        var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(user));
+
+        var refreshToken =refreshTokenService.GenerateRefreshToken(user.Id);
+
+        await refreshTokenRepository.AddAsync(refreshToken);
 
         var refreshTokenDTO = new RefreshTokenDTO
         {
@@ -29,19 +42,26 @@ public class AuthService(IMapper _mapper, IAuthRepository _repository, IHashHelp
             ExpiresAt = refreshToken.ExpiresAt
         };
 
-        return (_mapper.Map<UserReadDTO>(user), accessToken, refreshTokenDTO);
+        return (
+            mapper.Map<UserReadDTO>(user),
+            accessToken,
+            refreshTokenDTO);
     }
 
     public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> LoginAsync(UserLoginDTO dto)
     {
-        var user = await _repository.GetByEmailAsync(dto.Email);
-        if (user == null) return null;
-        if (!_hashHelper.IsPasswordValid(dto.Password, user.PasswordHash)) return null;
+        var email = NormalizeEmail(dto.Email);
 
-        var accessToken = _jwtService.GenerateAccessToken(_mapper.Map<UserTokenDTO>(user));
+        var user = await repository.GetByEmailAsync(email);
 
-        var refreshToken = _refreshTokenService.GenerateRefreshToken(user.Id);
-        await _refreshTokenRepository.AddAsync(refreshToken);
+        if (user == null || !user.IsActive) return null;
+        if (!hashHelper.IsPasswordValid(dto.Password,user.PasswordHash))
+            return null;
+
+        var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(user));
+        var refreshToken = refreshTokenService.GenerateRefreshToken(user.Id);
+
+        await refreshTokenRepository.AddAsync(refreshToken);
 
         var refreshTokenDTO = new RefreshTokenDTO
         {
@@ -54,16 +74,22 @@ public class AuthService(IMapper _mapper, IAuthRepository _repository, IHashHelp
 
     public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> RefreshAsync(string token)
     {
-        var oldRefreshToken = await _refreshTokenRepository.GetByTokenAsync(token);
-        if (oldRefreshToken == null || !oldRefreshToken.IsActive) return null;
+        if (string.IsNullOrWhiteSpace(token)) return null;
+
+        var oldRefreshToken = await refreshTokenRepository.GetByTokenAsync(token);
+
+        if (oldRefreshToken == null || !oldRefreshToken.IsActive || oldRefreshToken.User == null || !oldRefreshToken.User.IsActive)
+            return null;
 
         oldRefreshToken.IsRevoked = true;
-        await _refreshTokenRepository.UpdateAsync(oldRefreshToken);
 
-        var newRefreshToken = _refreshTokenService.GenerateRefreshToken(oldRefreshToken.UserId);
-        await _refreshTokenRepository.AddAsync(newRefreshToken);
+        await refreshTokenRepository.UpdateAsync(oldRefreshToken);
 
-        var accessToken = _jwtService.GenerateAccessToken(_mapper.Map<UserTokenDTO>(oldRefreshToken.User));
+        var newRefreshToken = refreshTokenService.GenerateRefreshToken(oldRefreshToken.UserId);
+
+        await refreshTokenRepository.AddAsync(newRefreshToken);
+
+        var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(oldRefreshToken.User));
 
         var refreshTokenDTO = new RefreshTokenDTO
         {
@@ -72,5 +98,10 @@ public class AuthService(IMapper _mapper, IAuthRepository _repository, IHashHelp
         };
 
         return (accessToken, refreshTokenDTO);
+    }
+
+    private static string NormalizeEmail(string email)
+    {
+        return email.Trim().ToLowerInvariant();
     }
 }

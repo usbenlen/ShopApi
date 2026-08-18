@@ -5,24 +5,37 @@ using Shop.Infrastructure.Data;
 
 namespace Shop.Infrastructure.Repository;
 
-public class RefreshTokenRepository(ShopDbContext _context) : IRefreshTokenRepository
+public class RefreshTokenRepository(ShopDbContext context) : IRefreshTokenRepository
 {
-    public async Task AddAsync(RefreshToken refreshToken)
+    public async Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
     {
-        await _context.RefreshTokens.AddAsync(refreshToken);
-        await _context.SaveChangesAsync();
+        await context.RefreshTokens.AddAsync(refreshToken, cancellationToken);
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(RefreshToken refreshToken)
+    public async Task UpdateAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
     {
-        _context.RefreshTokens.Update(refreshToken);
-        await _context.SaveChangesAsync();
+        context.RefreshTokens.Update(refreshToken);
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<RefreshToken?> GetByTokenAsync(string token)
+    public async Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default)
     {
-        return await _context.RefreshTokens
+        return await context.RefreshTokens
             .Include(x => x.User)
-            .FirstOrDefaultAsync(x => x.Token == token);
+            .FirstOrDefaultAsync(x => x.Token == token, cancellationToken);
+    }
+
+    public async Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        await context.RefreshTokens
+            .Where(x =>
+                x.UserId == userId &&
+                !x.IsRevoked)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(x => x.IsRevoked, true), 
+                cancellationToken);
     }
 }

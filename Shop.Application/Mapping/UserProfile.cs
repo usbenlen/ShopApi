@@ -9,10 +9,11 @@ public class UserProfile : Profile
     {
         CreateMap<UserCreateDTO, User>()
             .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
+
         CreateMap<User, UserReadDTO>();
-        CreateMap<UserUpdateDTO, User>(); //Потім переробити схоже як в CategoryProfile (якщо треба буде)
 
         CreateMap<User, UserLoginDTO>();
+
         CreateMap<User, UserTokenDTO>();
     }
 }
