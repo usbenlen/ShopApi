@@ -2,9 +2,8 @@
 
 public interface ICachingService
 {
-    Task<T?> GetAsync<T>(string key);
-    Task<T?> GetOrCreateAsync<T>(string key, Func<Task<T?>> factory, TimeSpan expiration, string? group = null);
-    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, string? group = null);
-    Task RemoveAsync(string key);
-    Task InvalidateGroupAsync(string group);
+    Task<T?> GetOrCreateAsync<T>(string key, Func<Task<T?>> factory, TimeSpan expiration, string? group = null, CancellationToken cancellationToken = default);
+    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, string? group = null, CancellationToken cancellationToken = default);
+    Task RemoveAsync(string key, CancellationToken cancellationToken = default);
+    Task InvalidateGroupAsync(string group, CancellationToken cancellationToken = default);
 }

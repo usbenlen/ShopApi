@@ -5,17 +5,19 @@ using Microsoft.OpenApi;
 using Shop.Api.Interfaces;
 //using Shop.Api.Middleware;
 using Shop.Api.Services;
+using Shop.Application.Configuration;
 using Shop.Application.Interfaces.Helpers;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Mapping;
 using Shop.Application.Services;
-using Shop.Application.Configuration;
+using Shop.Infrastructure.Caching;
 using Shop.Infrastructure.Configuration;
 using Shop.Infrastructure.Data;
 using Shop.Infrastructure.Helpers;
 using Shop.Infrastructure.Repository;
 using Shop.Infrastructure.Services;
+using StackExchange.Redis;
 using System.Text;
 
 namespace Shop.Api;
@@ -30,6 +32,23 @@ public class Program
         builder.Services.AddDbContext<ShopDbContext>(options =>
         {
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+        });
+
+        // -- Redis --
+        builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var connectionString = builder.Configuration.GetConnectionString("RedisConnection")
+                ?? throw new InvalidOperationException("RedisConnection is not configured");
+
+            var options = ConfigurationOptions.Parse(connectionString);
+
+            options.AbortOnConnectFail = false;
+            options.ConnectTimeout = 500;
+            options.SyncTimeout = 500;
+            options.AsyncTimeout = 500;
+            options.ConnectRetry = 1;
+
+            return ConnectionMultiplexer.Connect(options);
         });
 
         // -- Swagger + JWT --
@@ -85,6 +104,30 @@ public class Program
         builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection("AdminSeed"));
         builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
 
+        // -- Cache Configuration --
+        builder.Services
+            .AddOptions<CachingSettings>()
+            .Bind(builder.Configuration.GetSection("Caching"))
+            .Validate(settings =>
+                settings.DefaultExpirationMinutes > 0,
+                "Caching.DefaultExpirationMinutes must be greater than 0")
+            .Validate(settings =>
+                settings.Categories.ExpirationMinutes > 0,
+                "Caching.Categories.ExpirationMinutes must be greater than 0")
+            .Validate(settings =>
+                settings.Products.ExpirationMinutes > 0,
+                "Caching.Products.ExpirationMinutes must be greater than 0")
+            .Validate(settings =>
+                settings.L1.ExpirationMinutes > 0,
+                "Caching.L1.ExpirationMinutes must be greater than 0")
+            .Validate(settings =>
+                settings.L1.SizeLimit > 0,
+                "Caching.L1.SizeLimit must be greater than 0")
+            .Validate(settings =>
+                settings.Negative.ExpirationSeconds > 0,
+                "Caching.Negative.ExpirationSeconds must be greater than 0")
+            .ValidateOnStart();
+
         // -- CORS (Дозволити запити з усіх сайтів до серверу (Але бажано додати білий список)) --
         builder.Services.AddCors(options =>
         {
@@ -107,9 +150,6 @@ public class Program
             });
         });
 
-        // -- Cache --
-        builder.Services.AddMemoryCache();
-
         // -- DI container --
         builder.Services.AddControllers();
 
@@ -124,7 +164,11 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IPasswordService, PasswordService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
-        builder.Services.AddSingleton<ICachingService, MemoryCachingService>();
+
+        // -- Cache --
+        builder.Services.AddSingleton<MemoryCacheStore>();
+        builder.Services.AddSingleton<RedisCacheStore>();
+        builder.Services.AddSingleton<ICachingService, HybridCachingService>();
 
         // -- Helpers --
         builder.Services.AddSingleton<IHashHelper, HashHelper>();
