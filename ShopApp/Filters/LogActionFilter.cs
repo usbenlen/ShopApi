@@ -6,11 +6,11 @@ public class LogActionFilter : ActionFilterAttribute
 {
     public override void OnActionExecuting(ActionExecutingContext context)
     {
-        Console.WriteLine("До виконання метода");
+        Console.WriteLine("Before running function");
     }
 
     public override void OnActionExecuted(ActionExecutedContext context)
     {
-        Console.WriteLine("Після виконання метода");
+        Console.WriteLine("After running function");
     }
 }

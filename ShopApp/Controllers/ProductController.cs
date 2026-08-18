@@ -10,7 +10,6 @@ namespace Shop.Api.Controllers;
 /// <summary>Контролер для роботи з продуктами</summary>
 [ApiController]
 [Route("api/[controller]")]
-[LogActionFilter]
 public class ProductsController(IProductService _productService, IImageService _imageService, IConfiguration _configuration) : ControllerBase
 {
     /// <summary>Створити новий продукт разом із фотографіями</summary>

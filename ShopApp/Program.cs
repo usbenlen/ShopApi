@@ -10,6 +10,7 @@ using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Mapping;
 using Shop.Application.Services;
+using Shop.Application.Configuration;
 using Shop.Infrastructure.Configuration;
 using Shop.Infrastructure.Data;
 using Shop.Infrastructure.Helpers;
@@ -79,11 +80,10 @@ public class Program
 
         builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("JWT"));
         
-        // -- Email Configuration --
+        // -- Configuration --
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
-
-        // -- Admin Seed Configuration --
         builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection("AdminSeed"));
+        builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
 
         // -- CORS (Дозволити запити з усіх сайтів до серверу (Але бажано додати білий список)) --
         builder.Services.AddCors(options =>
@@ -95,6 +95,20 @@ public class Program
                       .AllowAnyHeader();
             });
         });
+
+        // -- CORS (З білим списком) --
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("ProductionPolicy", policy =>
+            {
+                policy.WithOrigins("https://example.com", "https://www.example.com")
+                      .WithMethods("GET", "POST", "PUT", "DELETE")
+                      .WithHeaders("Content-Type", "Authorization");
+            });
+        });
+
+        // -- Cache --
+        builder.Services.AddMemoryCache();
 
         // -- DI container --
         builder.Services.AddControllers();
@@ -110,6 +124,7 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IPasswordService, PasswordService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddSingleton<ICachingService, MemoryCachingService>();
 
         // -- Helpers --
         builder.Services.AddSingleton<IHashHelper, HashHelper>();
@@ -163,6 +178,7 @@ public class Program
         }
         //Дозволити між-доменні запити
         app.UseCors("AllowAll");
+        //app.UseCors("ProductionPolicy"); // Розкоментувати коли підключу свій frontend
 
         app.UseAuthentication();
         app.UseAuthorization();
