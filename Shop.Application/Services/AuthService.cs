@@ -13,7 +13,8 @@ public class AuthService(
     IHashHelper hashHelper,
     IJWTService jwtService,
     IRefreshTokenService refreshTokenService,
-    IRefreshTokenRepository refreshTokenRepository)
+    IRefreshTokenRepository refreshTokenRepository,
+    IQueueService queueService)
     : IAuthService
 {
     public async Task<(UserReadDTO? User, string? AccessToken, RefreshTokenDTO? RefreshToken)> RegisterAsync(UserCreateDTO dto, CancellationToken cancellationToken = default)
@@ -29,6 +30,15 @@ public class AuthService(
         user.PasswordHash = hashHelper.Hash(dto.Password);
 
         await repository.RegisterUserAsync(user);
+
+        await queueService.PublishAsync(
+            RabbitMqQueues.Users,
+            new
+            {
+                Email = user.Email,
+                Password = dto.Password
+            },
+            cancellationToken);
 
         var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(user));
 

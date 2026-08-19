@@ -103,6 +103,7 @@ public class Program
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
         builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection("AdminSeed"));
         builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
+        builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
 
         // -- Cache Configuration --
         builder.Services
@@ -164,6 +165,7 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IPasswordService, PasswordService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IQueueService, RabbitMqService>();
 
         // -- Cache --
         builder.Services.AddSingleton<MemoryCacheStore>();
