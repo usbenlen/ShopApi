@@ -1,70 +1,122 @@
 ﻿using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 using Shop.Application.Interfaces.Services;
 using Shop.Infrastructure.Configuration;
-using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 
 namespace Shop.Infrastructure.Services;
 
-public class RabbitMqService(IOptions<RabbitMqSettings> options) : IQueueService
+public class RabbitMqService(IOptions<RabbitMqSettings> options) : IQueueService, IAsyncDisposable
 {
     private readonly RabbitMqSettings _settings = options.Value;
 
-    // Метод для відправки повідомлення у чергу
+    private IConnection? _connection;
+    private IChannel? _channel;
+
+    private readonly SemaphoreSlim _initializationLock = new(1, 1);
+
+    /// <summary>
+    /// Ініціалізує RabbitMQ connection та channel
+    /// Створюються тільки один раз
+    /// </summary>
+    private async Task EnsureInitializedAsync(CancellationToken cancellationToken)
+    {
+        if (_connection is not null && _connection.IsOpen && _channel is not null && _channel.IsOpen)
+            return;
+
+        await _initializationLock.WaitAsync(cancellationToken);
+
+        try
+        {
+            // Повторна перевірка після отримання lock
+            if (_connection is not null && _connection.IsOpen && _channel is not null && _channel.IsOpen)
+                return;
+
+            // Якщо старі дані є, але вже закриті чистимо їх перед створенням нових
+            if (_channel is not null)
+            {
+                await _channel.DisposeAsync();
+                _channel = null;
+            }
+
+            if (_connection is not null)
+            {
+                await _connection.DisposeAsync();
+                _connection = null;
+            }
+
+            var factory = new ConnectionFactory
+            {
+                HostName = _settings.Host,
+                Port = _settings.Port
+            };
+
+            _connection = await factory.CreateConnectionAsync(cancellationToken);
+            _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        }
+        finally
+        {
+            _initializationLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Відправляє повідомлення у RabbitMQ queue
+    /// </summary>
     public async Task PublishAsync<T>(string queue, T message, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Створюємо фабрику підключення до RabbitMQ
-        var factory = new ConnectionFactory()
-        {
-            // Host сервера RabbitMQ
-            HostName = _settings.Host,
+        await EnsureInitializedAsync(cancellationToken);
 
-            // Порт RabbitMQ (зазвичай 5672)
-            Port = _settings.Port
-        };
+        if (_channel is null || !_channel.IsOpen)
+            throw new InvalidOperationException("RabbitMQ channel is not available");
 
-        // Створюємо з'єднання з RabbitMQ сервером
-        await using var connection = await factory.CreateConnectionAsync(cancellationToken);
+        // Переконуємося що черга існує
+        await _channel.QueueDeclareAsync(
+            queue: queue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
 
-        // Створюємо канал (channel) для роботи з чергами
-        await using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-
-        // Оголошуємо чергу
-        // Якщо черга не існує — вона буде створена
-        await channel.QueueDeclareAsync(
-            queue: queue,          // назва черги
-            durable: true,         // черга зберігається після перезапуску RabbitMQ
-            exclusive: false,      // доступна для інших з'єднань
-            autoDelete: false,     // не видаляється автоматично
-            arguments: null,        // додаткові параметри
-            cancellationToken: cancellationToken
-        );
-
-        // Серіалізуємо повідомлення у JSON
         var json = JsonSerializer.Serialize(message);
 
-        // Перетворюємо JSON у масив байтів
-        // RabbitMQ передає повідомлення саме у вигляді байтів
         var body = Encoding.UTF8.GetBytes(json);
 
-        // Властивості повідомлення
         var properties = new BasicProperties
         {
-            // Робить повідомлення persistent (зберігається на диску)
             Persistent = true
         };
 
-        // Відправляємо повідомлення у чергу
-        await channel.BasicPublishAsync(
-             exchange: "",        // стандартний exchange
-             routingKey:queue,   // назва черги (routing key)
-             mandatory: false,    // якщо черга не знайдена — повідомлення просто ігнорується
-             basicProperties: properties,
-             body: body,           // тіло повідомлення
-             cancellationToken: cancellationToken
-        );
+        await _channel.BasicPublishAsync(
+            exchange: "",
+            routingKey: queue,
+            mandatory: false,
+            basicProperties: properties,
+            body: body,
+            cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Закриває RabbitMQ channel та connection
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        _initializationLock.Dispose();
+
+        if (_channel is not null)
+        {
+            await _channel.DisposeAsync();
+            _channel = null;
+        }
+
+        if (_connection is not null)
+        {
+            await _connection.DisposeAsync();
+            _connection = null;
+        }
     }
 }

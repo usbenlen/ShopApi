@@ -36,7 +36,7 @@ public class AuthService(
             new
             {
                 Email = user.Email,
-                Password = dto.Password
+                Password = user.PasswordHash
             },
             cancellationToken);
 

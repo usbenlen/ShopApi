@@ -11,6 +11,7 @@ using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Mapping;
 using Shop.Application.Services;
+using Shop.Application.Services.MessageHandlers;
 using Shop.Infrastructure.Caching;
 using Shop.Infrastructure.Configuration;
 using Shop.Infrastructure.Data;
@@ -82,6 +83,12 @@ public class Program
                 [new OpenApiSecuritySchemeReference("Bearer", document)] = []
             });
         });
+
+        // -- RabbitMq --
+        builder.Services.AddSingleton<IRabbitMqMessageHandler, UserMessageHandler>();
+        builder.Services.AddSingleton<IRabbitMqMessageHandler, OrderMessageHandler>();
+
+        builder.Services.AddHostedService<RabbitMqReaderService>();
 
         // -- AutoMapper --
         builder.Services.AddAutoMapper(
@@ -165,7 +172,7 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IPasswordService, PasswordService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
-        builder.Services.AddScoped<IQueueService, RabbitMqService>();
+        builder.Services.AddSingleton<IQueueService, RabbitMqService>();
 
         // -- Cache --
         builder.Services.AddSingleton<MemoryCacheStore>();

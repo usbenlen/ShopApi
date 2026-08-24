@@ -15,6 +15,8 @@ public class ShopDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderDetail> OrderDetails { get; set; }
 
     // Автоматично встановлює CreatedAt і UpdatedAt перед збереженням
     public override int SaveChanges()
@@ -108,6 +110,32 @@ public class ShopDbContext : DbContext
             .WithMany(p => p.Images)
             .HasForeignKey(i => i.ProductId)
             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // --- Order ---
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasOne(o => o.User)
+                  .WithMany(u => u.Orders)
+                  .HasForeignKey(o => o.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(o => o.OrderDetails)
+                  .WithOne(od => od.Order)
+                  .HasForeignKey(od => od.OrderId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // --- OrderDetail ---
+        modelBuilder.Entity<OrderDetail>(entity =>
+        {
+            entity.Property(od => od.Price)
+                  .HasColumnType("decimal(18,2)");
+
+            entity.HasOne(od => od.Product)
+                  .WithMany()
+                  .HasForeignKey(od => od.ProductId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
