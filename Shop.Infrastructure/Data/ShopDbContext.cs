@@ -115,6 +115,8 @@ public class ShopDbContext : DbContext
         // --- Order ---
         modelBuilder.Entity<Order>(entity =>
         {
+            entity.HasIndex(o => o.OrderRequestId).IsUnique();
+
             entity.HasOne(o => o.User)
                   .WithMany(u => u.Orders)
                   .HasForeignKey(o => o.UserId)

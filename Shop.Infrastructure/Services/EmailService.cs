@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using Shop.Application.DTOs.OrderDTOs;
 using Shop.Application.Interfaces.Services;
 using Shop.Infrastructure.Configuration;
 using System.Net;
@@ -244,4 +245,194 @@ public class EmailService(
 
         await client.SendMailAsync(message);
     }
+
+    public async Task SendOrderConfirmationEmailAsync(string email, IReadOnlyList<OrderProcessingProductDTO> products, decimal totalPrice, int orderId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+
+        var rows = string.Join(
+            "",
+            products.Select(product =>
+            {
+                var itemTotal = product.Price * product.Count;
+
+                return $"""
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eeeeee;">
+                        {WebUtility.HtmlEncode(product.ProductName)}
+                    </td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eeeeee;">
+                        {product.Price:F2}
+                    </td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eeeeee;">
+                        {product.Count}
+                    </td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eeeeee;">
+                        {itemTotal:F2}
+                    </td>
+                </tr>
+                """;
+            }));
+
+        var body = $"""
+        <!DOCTYPE html>
+        <html lang="uk">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Замовлення #{orderId}</title>
+        </head>
+
+        <body style="
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            color: #222222;
+        ">
+            <div style="
+                max-width: 700px;
+                margin: 40px auto;
+                background: #ffffff;
+                padding: 32px;
+                border-radius: 8px;
+            ">
+
+                <h2>
+                    Дякуємо за ваше замовлення!
+                </h2>
+
+                <p>
+                    Замовлення
+                    <strong>#{orderId}</strong>
+                    успішно створено.
+                </p>
+
+                <table style="width: 100%; border-collapse: collapse; margin-top: 25px;
+                ">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 10px; border-bottom: 2px solid #dddddd;
+                            ">
+                                Товар
+                            </th>
+
+                            <th style="text-align: left; padding: 10px; border-bottom: 2px solid #dddddd;
+                            ">
+                                Ціна
+                            </th>
+
+                            <th style="text-align: left; padding: 10px; border-bottom: 2px solid #dddddd;
+                            ">
+                                Кількість
+                            </th>
+
+                            <th style="text-align: left; padding: 10px; border-bottom: 2px solid #dddddd;
+                            ">
+                                Сума
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {rows}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 25px; text-align: right; font-size: 18px;
+                ">
+                    <strong>
+                        Загальна сума: {totalPrice:F2}
+                    </strong>
+                </div>
+
+                <p style="margin-top: 30px; color: #777777;
+                ">
+                    Це автоматичний лист. Будь ласка, не відповідайте на нього.
+                </p>
+
+            </div>
+        </body>
+        </html>
+        """;
+
+        await SendEmailAsync(email, $"Замовлення #{orderId} - Shop", body, cancellationToken);
+    }
+
+    public async Task SendOrderWaitingEmailAsync(string email, IReadOnlyList<OrderProcessingProductDTO> unavailableProducts, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+
+        var rows = string.Join(
+            "",
+            unavailableProducts.Select(product =>
+            {
+                return $"""
+                <li style="margin-bottom: 8px;">
+                    <strong>
+                        {WebUtility.HtmlEncode(product.ProductName)}
+                    </strong>
+                    - кількість: {product.Count}
+                </li>
+                """;
+            }));
+
+        var body = $"""
+        <!DOCTYPE html>
+        <html lang="uk">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Замовлення очікує</title>
+        </head>
+
+        <body style="
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            color: #222222;
+        ">
+            <div style="
+                max-width: 600px;
+                margin: 40px auto;
+                background: #ffffff;
+                padding: 32px;
+                border-radius: 8px;
+            ">
+
+                <h2>
+                    Замовлення очікує
+                </h2>
+
+                <p>
+                    На жаль, зараз на складі недостатньо деяких товарів для виконання вашого замовлення.
+                </p>
+
+                <p>
+                    Товари, яких недостатньо:
+                </p>
+
+                <ul>
+                    {rows}
+                </ul>
+
+                <p style="margin-top: 25px; color: #555555;
+                ">
+                    Замовлення не було створено та товар зі складу не списувався.
+                </p>
+
+                <p style="margin-top: 30px; font-size: 12px; color: #999999;
+                ">
+                    Це автоматичний лист. Будь ласка, не відповідайте на нього.
+                </p>
+
+            </div>
+        </body>
+        </html>
+        """;
+
+        await SendEmailAsync(email, "Замовлення очікує - Shop", body, cancellationToken);
+    }
+
 }

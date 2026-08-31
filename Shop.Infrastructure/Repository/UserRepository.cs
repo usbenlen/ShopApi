@@ -27,6 +27,21 @@ public class UserRepository(ShopDbContext context) : IUserRepository
         return await context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }
 
+    public async Task<string> GetEmailAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var email = await context.Users
+            .AsNoTracking()
+            .Where(x => x.Id == userId && x.IsActive)
+            .Select(x => x.Email)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(email))
+            throw new InvalidOperationException($"Email for active user {userId} was not found");
+
+        return email;
+    }
+
+
     public async Task<bool> IsEmailInUseAsync(string email, CancellationToken cancellationToken = default)
     {
         return await context.Users.AnyAsync(x => x.Email == email, cancellationToken);

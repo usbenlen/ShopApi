@@ -172,6 +172,8 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IPasswordService, PasswordService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IOrderService, OrderService>();
+
         builder.Services.AddSingleton<IQueueService, RabbitMqService>();
 
         // -- Cache --
@@ -189,6 +191,7 @@ public class Program
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+        builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
         // -- Authentication --
         builder.Services.AddAuthentication(options =>

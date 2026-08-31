@@ -1,4 +1,6 @@
 @ShopApp_HostAddress = https://localhost:7250
+@token = YOUR_JWT_TOKEN
+@productId = 3
 
 ### Dz1
 
@@ -41,3 +43,38 @@ GET {{ShopApp_HostAddress}}/api/category
 ###
 
 GET {{ShopApp_HostAddress}}/api/category/2
+
+### Dz12 test
+### 1. Однаковий продукт двічі Controller повинен об'єднати в count = 3
+
+POST {{ShopApp_HostAddress}}/api/Orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "products": [
+    {
+      "productId": {{productId}},
+      "count": 1
+    },
+    {
+      "productId": {{productId}},
+      "count": 2
+    }
+  ]
+}
+
+### 2. Просто для тесту
+
+POST {{ShopApp_HostAddress}}/api/Orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "products": [
+    {
+      "productId": 3,
+      "count": -1
+    }
+  ]
+}

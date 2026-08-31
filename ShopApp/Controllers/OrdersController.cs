@@ -17,14 +17,26 @@ public class OrdersController(IQueueService _queueService, IProductService _prod
         if (dto.Products is null || dto.Products.Count == 0)
             return BadRequest("Order must contain at least one product");
 
-        // дістаю з jwt GUID а потім його парсю
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
 
-        var products = new List<OrderMessageProductDTO>();
+        var requestedProducts = dto.Products
+            .GroupBy(x => x.ProductId)
+            .Select(g => new OrderProductDTO
+            {
+                ProductId = g.Key,
+                Count = g.Sum(x => x.Count)
+            })
+            .ToList();
 
-        foreach (var item in dto.Products)
+        var products = new List<OrderMessageProductDTO>(requestedProducts.Count);
+
+        foreach (var item in requestedProducts)
         {
+            if (item.ProductId <= 0)
+                return BadRequest($"Invalid product id: {item.ProductId}");
+
             if (item.Count <= 0)
                 return BadRequest($"Invalid count for product {item.ProductId}");
 
@@ -51,6 +63,7 @@ public class OrdersController(IQueueService _queueService, IProductService _prod
 
         var message = new OrderMessageDTO
         {
+            OrderRequestId = Guid.NewGuid(),
             UserId = userId,
             Products = products,
             TotalPrice = totalPrice
@@ -61,7 +74,9 @@ public class OrdersController(IQueueService _queueService, IProductService _prod
         return Accepted(new
         {
             message = "Order has been sent for processing",
+            orderRequestId = message.OrderRequestId,
             totalPrice
         });
     }
+
 }

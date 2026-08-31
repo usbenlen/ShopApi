@@ -13,6 +13,10 @@ public class Order : BaseEntity
     public int Id { get; set; }
 
     [Required]
+    [Column("order_request_id")]
+    public Guid OrderRequestId { get; set; }
+
+    [Required]
     [Column("user_id")]
     public Guid UserId { get; set; }
 

@@ -23,8 +23,7 @@ public class RabbitMqReaderService(
     private IConnection? _connection;
     private IChannel? _channel;
 
-    protected override async Task ExecuteAsync(
-        CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var factory = new ConnectionFactory
         {
@@ -72,26 +71,34 @@ public class RabbitMqReaderService(
             try
             {
                 var body = eventArgs.Body.ToArray();
-
                 var json = Encoding.UTF8.GetString(body);
 
                 await handler.HandleAsync(json, cancellationToken);
+
+                await _channel.BasicAckAsync(
+                    deliveryTag: eventArgs.DeliveryTag,
+                    multiple: false,
+                    cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    $"Error while processing message from queue {handler.QueueName}");
+                _logger.LogError(ex, "Error while processing message from queue {Queue}", handler.QueueName);
+
+                await _channel.BasicNackAsync(
+                    deliveryTag: eventArgs.DeliveryTag,
+                    multiple: false,
+                    requeue: true,
+                    cancellationToken: cancellationToken);
             }
         };
 
         await _channel.BasicConsumeAsync(
             queue: handler.QueueName,
-            autoAck: true,
+            autoAck: false,
             consumer: consumer,
             cancellationToken: cancellationToken);
 
-        _logger.LogInformation($"RabbitMQ subscribed to queue: {handler.QueueName}");
+        _logger.LogInformation("RabbitMQ subscribed to queue: {Queue}", handler.QueueName);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
