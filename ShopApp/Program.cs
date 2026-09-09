@@ -111,6 +111,7 @@ public class Program
         builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection("AdminSeed"));
         builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
         builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
+        builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDb"));
 
         // -- Cache Configuration --
         builder.Services
@@ -164,6 +165,8 @@ public class Program
         // -- Services --
         builder.Services.AddScoped<IProductService, ProductService>(); // При кожному запиті створюється новий екземпляр об'єкту. (Тобто сервіс не збереже останні POST запити (безпечно)).
         //builder.Services.AddSingleton<IProductService, ProductService>(); // При кожному запиті лишається той самий об'єкт (Сервіс збереже POST запити, для деяких випадків корисно, і потрібно (Дещо небезпечно)).
+        builder.Services.AddScoped<IProductFeedbackService, MongoProductFeedbackService>();
+
         builder.Services.AddScoped<ICategoryService, CategoryService>();
         builder.Services.AddScoped<IImageService, ImageService>();
         builder.Services.AddScoped<IAuthService, AuthService>();

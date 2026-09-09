@@ -1,16 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Shop.Api.Filters;
 using Shop.Api.Interfaces;
 using Shop.Api.Requests.Products;
 using Shop.Application.DTOs.ProductDTOs;
+using Shop.Application.DTOs.ProductFeedbackDTOs;
 using Shop.Application.Interfaces.Services;
+using Shop.Domain.Enums;
+using System.Security.Claims;
 
 namespace Shop.Api.Controllers;
 
 /// <summary>Контролер для роботи з продуктами</summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ProductsController(IProductService _productService, IImageService _imageService, IConfiguration _configuration) : ControllerBase
+public class ProductsController(IProductService _productService, IImageService _imageService, IProductFeedbackService _productFeedbackService, IConfiguration _configuration) : ControllerBase
 {
     /// <summary>Створити новий продукт разом із фотографіями</summary>
     /// <param name="dto">Дані продукту та файли зображень</param>
@@ -104,4 +108,43 @@ public class ProductsController(IProductService _productService, IImageService _
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Додати відгук або питання до продукту
+    /// </summary>
+    /// <param name="id">Ідентифікатор продукту</param>
+    /// <param name="dto">Дані відгуку або питання</param>
+    /// <returns>Результат створення</returns>
+    [Authorize]
+    [HttpPost("{id}/feedback")]
+    public async Task<IActionResult> CreateFeedback(int id, [FromBody] ProductFeedbackCreateDTO dto)
+    {
+        if (id <= 0) return BadRequest("Invalid product id");
+
+        if (string.IsNullOrWhiteSpace(dto.Message)) 
+            return BadRequest("Message is required");
+
+        if (dto.Message.Length > 2000) 
+            return BadRequest("Message cannot exceed 2000 characters");
+
+        if (dto.Type == ProductFeedbackType.Review)
+        {
+            if (!dto.Rating.HasValue || dto.Rating < 1 || dto.Rating > 5)
+                return BadRequest("Review rating must be between 1 and 5");
+        }
+        else if (dto.Type == ProductFeedbackType.Question)
+            dto.Rating = null;
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+            return Unauthorized();
+
+        var product = await _productService.GetProductByIdAsync(id);
+        if (product == null) return NotFound("Product not found");
+
+        await _productFeedbackService.CreateAsync(id, userId, dto);
+
+        return Ok("Feedback added");
+    }
+
 }
