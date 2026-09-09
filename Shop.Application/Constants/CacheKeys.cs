@@ -11,6 +11,7 @@ public static class CacheKeys
 
     public const string AllCategories = $"{CategoriesPrefix}:all";
     public static string Category(int id) => $"{CategoriesPrefix}:{id}";
+    public static string CategoryBySlug(string slug) => $"{CategoriesPrefix}:slug:{slug}";
     public static string CategoryTree(int id) => $"{CategoriesPrefix}:{id}:tree";
     public static string ParentCategories(int id) => $"{CategoriesPrefix}:{id}:parents";
     public static string ChildCategories(int id) => $"{CategoriesPrefix}:{id}:children";

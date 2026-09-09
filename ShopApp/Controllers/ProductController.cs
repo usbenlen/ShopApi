@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shop.Api.Filters;
 using Shop.Api.Interfaces;
 using Shop.Api.Requests.Products;
+using Shop.Application.Commands.Products.CreateProduct;
+using Shop.Application.Commands.Products.DeleteProduct;
 using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.DTOs.ProductFeedbackDTOs;
 using Shop.Application.Interfaces.Services;
+using Shop.Application.Queries.Product.GetProductById;
 using Shop.Domain.Enums;
 using System.Security.Claims;
 
@@ -14,7 +18,7 @@ namespace Shop.Api.Controllers;
 /// <summary>Контролер для роботи з продуктами</summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ProductsController(IProductService _productService, IImageService _imageService, IProductFeedbackService _productFeedbackService, IConfiguration _configuration) : ControllerBase
+public class ProductsController(IProductService _productService, IImageService _imageService, IProductFeedbackService _productFeedbackService, IConfiguration _configuration, IMediator _mediator) : ControllerBase
 {
     /// <summary>Створити новий продукт разом із фотографіями</summary>
     /// <param name="dto">Дані продукту та файли зображень</param>
@@ -45,7 +49,8 @@ public class ProductsController(IProductService _productService, IImageService _
             Images = dto.Images
         };
 
-        int? id = await _productService.CreateProductAsync(productDto);
+        int? id = await _mediator.Send(new CreateProductCommand(productDto));
+        //int? id = await _productService.CreateProductAsync(productDto);
 
         return Ok($"Product created {id}");
     }
@@ -67,7 +72,8 @@ public class ProductsController(IProductService _productService, IImageService _
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProductById(int id)
     {
-        var product = await _productService.GetProductByIdAsync(id);
+        var product = await _mediator.Send(new GetProductByIdQuery(id));
+        //var product = await _productService.GetProductByIdAsync(id);
         if (product == null) return NotFound("Product not found");
 
         return Ok(product);
@@ -103,8 +109,10 @@ public class ProductsController(IProductService _productService, IImageService _
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        bool deleted = await _productService.DeleteProductAsync(id);
-        if (!deleted) return NotFound("Product not found");
+        var deleted = await _mediator.Send(new DeleteProductCommand(id));
+        if (deleted is null) return NotFound("Product not found");
+        //bool deleted = await _productService.DeleteProductAsync(id);
+        //if (!deleted) return NotFound("Product not found");
 
         return NoContent();
     }

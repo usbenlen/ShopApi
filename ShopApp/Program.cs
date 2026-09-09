@@ -10,6 +10,7 @@ using Shop.Application.Interfaces.Helpers;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Mapping;
+using Shop.Application.Queries.Product.GetProductById;
 using Shop.Application.Services;
 using Shop.Application.Services.MessageHandlers;
 using Shop.Infrastructure.Caching;
@@ -157,6 +158,12 @@ public class Program
                       .WithMethods("GET", "POST", "PUT", "DELETE")
                       .WithHeaders("Content-Type", "Authorization");
             });
+        });
+
+        // -- MEDIATR --
+        builder.Services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(GetProductByIdHandler).Assembly);
         });
 
         // -- DI container --

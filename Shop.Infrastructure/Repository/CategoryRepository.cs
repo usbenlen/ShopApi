@@ -22,6 +22,13 @@ public class CategoryRepository(ShopDbContext _context) : ICategoryRepository
             .ToListAsync();
     }
 
+    public async Task<Category?> GetCategoryBySlugAsync(string slug)
+    {
+        return await _context.Categories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Slug == slug);
+    }
+
     public async Task<Category?> GetCategoryByIdAsync(int id)
     {
         return await _context.Categories

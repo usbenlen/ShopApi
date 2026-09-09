@@ -1,15 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Shop.Application.Interfaces.Services;
-using Shop.Application.DTOs.CategoryDTOs;
-using Shop.Api.Requests.Categories;
-using Shop.Api.Interfaces;
+﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Shop.Api.Interfaces;
+using Shop.Api.Requests.Categories;
+using Shop.Application.Commands.Categories.CreateCategory;
+using Shop.Application.DTOs.CategoryDTOs;
+using Shop.Application.Interfaces.Services;
+using Shop.Application.Queries.Category.GetCategoryById;
+using Shop.Application.Queries.Category.GetCategoryBySlug;
 
 namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] //https://ip:port/api/category
-public class CategoryController(ICategoryService _categoryService, IImageService _imageService, IConfiguration _configuration) : ControllerBase
+public class CategoryController(ICategoryService _categoryService, IImageService _imageService, IConfiguration _configuration, IMediator _mediator) : ControllerBase
 {
     [HttpPost]
     [Authorize]
@@ -27,7 +31,8 @@ public class CategoryController(ICategoryService _categoryService, IImageService
             ParentId = dto.ParentId,
         };
 
-        int? id = await _categoryService.CreateCategoryAsync(createDTO);
+        int? id = await _mediator.Send(new CreateCategoryCommand(createDTO));
+        //int? id = await _categoryService.CreateCategoryAsync(createDTO);
         return Ok($"Category created {id}"); // 200 status
         //return CreatedAtAction(
         //    nameof(GetCategoryById), // назва методу
@@ -43,14 +48,25 @@ public class CategoryController(ICategoryService _categoryService, IImageService
         return Ok(categories);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("id/{id}")]
     public async Task<IActionResult> GetCategoryById(int id)
     {
-        var category = await _categoryService.GetCategoryByIdAsync(id);
+        var category = await _mediator.Send(new GetCategoryByIdQuery(id));
+        //var category = await _categoryService.GetCategoryByIdAsync(id);
         if (category == null) return NotFound();
 
         return Ok(category);
     }
+
+    [HttpGet("{slug}")]
+    public async Task<ActionResult<CategoryReadDTO>> GetCategoryBySlug(string slug)
+    {
+        var category = await _mediator.Send(new GetCategoryBySlugQuery(slug));
+        if (category is null) return NotFound();
+
+        return Ok(category);
+    }
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCategory(int id)
