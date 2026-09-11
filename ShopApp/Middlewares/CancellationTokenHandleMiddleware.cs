@@ -8,7 +8,7 @@ public class CancellationTokenHandleMiddleware(RequestDelegate _next, ILogger<Ca
         {
             await _next(context);
         }
-        catch (Exception ex) when (ex is OperationCanceledException or TaskCanceledException)
+        catch (OperationCanceledException)
         {
             _logger.LogError("Request is canceled");
         }

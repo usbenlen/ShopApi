@@ -4,9 +4,11 @@ namespace Shop.Api.Services;
 
 public class ImageService(IWebHostEnvironment _environment) : IImageService
 {
-    public async Task<string> SaveFileAsync(IFormFile file, string folderName)
+    public async Task<string> SaveFileAsync(IFormFile file, string folderName, CancellationToken cancellationToken = default)
     {
         if (file == null || file.Length == 0) throw new ArgumentException("File is empty");
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         var folderPath = Path.Combine(_environment.WebRootPath, folderName);
         Directory.CreateDirectory(folderPath);
@@ -16,7 +18,7 @@ public class ImageService(IWebHostEnvironment _environment) : IImageService
         var filePath = Path.Combine(folderPath, fileName);
 
         await using var stream = new FileStream(filePath, FileMode.Create);
-        await file.CopyToAsync(stream);
+        await file.CopyToAsync(stream, cancellationToken);
 
         return $"{fileName}";
     }

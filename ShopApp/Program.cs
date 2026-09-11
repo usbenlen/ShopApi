@@ -253,9 +253,13 @@ public class Program
 
         await AdminSeeder.SeedAsync(app.Services);
 
-        //app.UseMiddleware<RequestTimerMiddleware>();
-        //app.UseMiddleware<UserMiddlewareCheck>();
-        app.UseMiddleware<CancellationTokenHandleMiddleware>();
+        if (app.Environment.IsDevelopment()) 
+        {
+            //app.UseMiddleware<RequestTimerMiddleware>();
+            //app.UseMiddleware<UserMiddlewareCheck>();
+            app.UseMiddleware<CancellationTokenHandleMiddleware>();
+            //app.UseMiddleware<CancellationTestMiddleware>(); Якщо треба протестити CancellationToken
+        }
 
         app.UseStaticFiles(); //Доступ до папки wwwroot/images
 

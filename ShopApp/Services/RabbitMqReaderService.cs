@@ -80,15 +80,22 @@ public class RabbitMqReaderService(
                     multiple: false,
                     cancellationToken: cancellationToken);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogInformation($"RabbitMQ message processing was canceled because application is stopping. Queue: {handler.QueueName}");
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while processing message from queue {Queue}", handler.QueueName);
+                _logger.LogError(ex, $"Error while processing message from queue {handler.QueueName}");
 
-                await _channel.BasicNackAsync(
-                    deliveryTag: eventArgs.DeliveryTag,
-                    multiple: false,
-                    requeue: true,
-                    cancellationToken: cancellationToken);
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    await _channel.BasicNackAsync(
+                        deliveryTag: eventArgs.DeliveryTag,
+                        multiple: false,
+                        requeue: true,
+                        cancellationToken: cancellationToken);
+                }
             }
         };
 
