@@ -1,7 +1,8 @@
 ﻿using Shop.Domain.Enums;
-using Shop.Domain.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Shop.Domain.Models;
 
 [Table("users")]
 public class User : BaseEntity
@@ -27,4 +28,5 @@ public class User : BaseEntity
     //navigation
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
 }

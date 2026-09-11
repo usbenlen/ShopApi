@@ -182,6 +182,7 @@ public class Program
         builder.Services.AddScoped<IJWTService, JWTService>();
         builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IUserAddressService, UserAddressService>();
         builder.Services.AddScoped<IPasswordService, PasswordService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IOrderService, OrderService>();
@@ -202,6 +203,7 @@ public class Program
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IUserAddressRepository, UserAddressRepository>();
         builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 

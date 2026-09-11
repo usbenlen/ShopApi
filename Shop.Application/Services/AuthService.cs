@@ -4,6 +4,7 @@ using Shop.Application.DTOs.UserDTOs;
 using Shop.Application.Interfaces.Helpers;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
+using Shop.Domain.Models;
 
 namespace Shop.Application.Services;
 

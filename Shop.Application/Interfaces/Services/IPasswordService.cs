@@ -1,4 +1,5 @@
 ﻿using Shop.Application.DTOs.AuthDTOs;
+using Shop.Domain.Models;
 
 namespace Shop.Application.Interfaces.Services;
 

@@ -17,6 +17,7 @@ public class ShopDbContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderDetail> OrderDetails { get; set; }
+    public DbSet<UserAddress> UserAddresses { get; set; }
 
     // Автоматично встановлює CreatedAt і UpdatedAt перед збереженням
     public override int SaveChanges()
@@ -68,6 +69,16 @@ public class ShopDbContext : DbContext
         {
             entity.HasIndex(u => u.Email).IsUnique();
         });
+
+        // --- UserAddress ---
+        modelBuilder.Entity<UserAddress>(entity =>
+        {
+            entity.HasOne(a => a.User)
+                  .WithMany(u => u.Addresses)
+                  .HasForeignKey(a => a.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
 
         // --- PasswordResetToken ---
         modelBuilder.Entity<PasswordResetToken>(entity =>

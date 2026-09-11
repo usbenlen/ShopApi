@@ -1,4 +1,5 @@
-﻿
+﻿using Shop.Domain.Models;
+
 namespace Shop.Application.Interfaces.Repository;
 
 public interface IAuthRepository

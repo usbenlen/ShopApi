@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Shop.Domain.Enums;
+using Shop.Domain.Models;
 using Shop.Infrastructure.Configuration;
 using Shop.Application.Interfaces.Helpers;
 

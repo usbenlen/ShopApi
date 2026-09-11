@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Shop.Application.DTOs.UserDTOs;
+using Shop.Domain.Models;
 
 namespace Shop.Application.Mapping;
 
@@ -15,5 +16,7 @@ public class UserProfile : Profile
         CreateMap<User, UserLoginDTO>();
 
         CreateMap<User, UserTokenDTO>();
+
+        CreateMap<UserAddress, UserAddressReadDTO>();
     }
 }

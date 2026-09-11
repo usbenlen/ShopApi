@@ -4,6 +4,7 @@ using Shop.Application.Interfaces.Helpers;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Domain.Enums;
+using Shop.Domain.Models;
 using System.Security.Cryptography;
 
 namespace Shop.Application.Services;

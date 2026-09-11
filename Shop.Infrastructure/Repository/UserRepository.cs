@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Shop.Application.Interfaces.Repository;
 using Shop.Infrastructure.Data;
+using Shop.Domain.Models;
 
 namespace Shop.Infrastructure.Repository;
 
