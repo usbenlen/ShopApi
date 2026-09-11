@@ -24,7 +24,7 @@ public class ProductsController(IProductService _productService, IImageService _
     /// <param name="dto">Дані продукту та файли зображень</param>
     /// <returns>Ідентифікатор створеного продукту</returns>
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] ProductCreateRequest dto)
+    public async Task<IActionResult> Create([FromForm] ProductCreateRequest dto, CancellationToken cancellationToken)
     {
         int maxImages = _configuration.GetValue<int>("ProductSettings:MaxImages");
         if (dto.ImagesFiles.Count > maxImages) return BadRequest($"Maximum allowed images: {maxImages}");
@@ -33,7 +33,7 @@ public class ProductsController(IProductService _productService, IImageService _
 
         foreach (var file in dto.ImagesFiles)
         {
-            string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"]);
+            string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"], cancellationToken);
 
             if (!string.IsNullOrEmpty(url)) dto.Images.Add(url);
         }
@@ -49,7 +49,7 @@ public class ProductsController(IProductService _productService, IImageService _
             Images = dto.Images
         };
 
-        int? id = await _mediator.Send(new CreateProductCommand(productDto));
+        int? id = await _mediator.Send(new CreateProductCommand(productDto), cancellationToken);
         //int? id = await _productService.CreateProductAsync(productDto);
 
         return Ok($"Product created {id}");
@@ -58,9 +58,9 @@ public class ProductsController(IProductService _productService, IImageService _
     /// <summary>Отримати список усіх продуктів</summary>
     /// <returns>Список продуктів</returns>
     [HttpGet]
-    public async Task<IActionResult> GetProducts()
+    public async Task<IActionResult> GetProducts(CancellationToken cancellationToken)
     {
-        var products = await _productService.GetProductsAsync();
+        var products = await _productService.GetProductsAsync(cancellationToken);
         return Ok(products);
     }
 
@@ -70,9 +70,9 @@ public class ProductsController(IProductService _productService, IImageService _
     /// <param name="id">Ідентифікатор продукту</param>
     /// <returns>Продукт або NotFound</returns>
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetProductById(int id)
+    public async Task<IActionResult> GetProductById(int id, CancellationToken cancellationToken)
     {
-        var product = await _mediator.Send(new GetProductByIdQuery(id));
+        var product = await _mediator.Send(new GetProductByIdQuery(id), cancellationToken);
         //var product = await _productService.GetProductByIdAsync(id);
         if (product == null) return NotFound("Product not found");
 
@@ -84,7 +84,7 @@ public class ProductsController(IProductService _productService, IImageService _
     /// <param name="dto">Нові дані продукту</param>
     /// <returns>Результат оновлення</returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, [FromForm] ProductUpdateRequest dto)
+    public async Task<IActionResult> UpdateProduct(int id, [FromForm] ProductUpdateRequest dto, CancellationToken cancellationToken)
     {
         if (dto.ImagesFiles != null && dto.ImagesFiles.Count > 0)
         {
@@ -92,12 +92,12 @@ public class ProductsController(IProductService _productService, IImageService _
 
             foreach (var file in dto.ImagesFiles)
             {
-                string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"]);
+                string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"], cancellationToken);
                 if (!string.IsNullOrEmpty(url)) dto.Images.Add(url);
             }
         }
 
-        bool updated = await _productService.UpdateProductAsync(id, dto);
+        bool updated = await _productService.UpdateProductAsync(id, dto, cancellationToken);
         if (!updated) return NotFound("Product not found");
 
         return Ok("Product updated");
@@ -107,9 +107,9 @@ public class ProductsController(IProductService _productService, IImageService _
     /// <param name="id">Ідентифікатор продукту</param>
     /// <returns>Результат видалення</returns>
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id)
+    public async Task<IActionResult> DeleteProduct(int id, CancellationToken cancellationToken)
     {
-        var deleted = await _mediator.Send(new DeleteProductCommand(id));
+        var deleted = await _mediator.Send(new DeleteProductCommand(id), cancellationToken);
         if (deleted is null) return NotFound("Product not found");
         //bool deleted = await _productService.DeleteProductAsync(id);
         //if (!deleted) return NotFound("Product not found");
@@ -125,7 +125,7 @@ public class ProductsController(IProductService _productService, IImageService _
     /// <returns>Результат створення</returns>
     [Authorize]
     [HttpPost("{id}/feedback")]
-    public async Task<IActionResult> CreateFeedback(int id, [FromBody] ProductFeedbackCreateDTO dto)
+    public async Task<IActionResult> CreateFeedback(int id, [FromBody] ProductFeedbackCreateDTO dto, CancellationToken cancellationToken)
     {
         if (id <= 0) return BadRequest("Invalid product id");
 
@@ -147,10 +147,10 @@ public class ProductsController(IProductService _productService, IImageService _
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
             return Unauthorized();
 
-        var product = await _productService.GetProductByIdAsync(id);
+        var product = await _productService.GetProductByIdAsync(id, cancellationToken);
         if (product == null) return NotFound("Product not found");
 
-        await _productFeedbackService.CreateAsync(id, userId, dto);
+        await _productFeedbackService.CreateAsync(id, userId, dto, cancellationToken);
 
         return Ok("Feedback added");
     }

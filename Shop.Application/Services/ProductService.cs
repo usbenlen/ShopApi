@@ -17,7 +17,7 @@ public class ProductService(IProductRepository _repository, IMapper _mapper, ICa
     private readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(_cacheSettings.Value.Products.ExpirationMinutes);
 
     /// <inheritdoc/>
-    public async Task<int?> CreateProductAsync(ProductCreateDTO dto)
+    public async Task<int?> CreateProductAsync(ProductCreateDTO dto, CancellationToken cancellationToken = default)
     {
         Product product = _mapper.Map<Product>(dto);
 
@@ -26,68 +26,70 @@ public class ProductService(IProductRepository _repository, IMapper _mapper, ICa
             Url = x
         }).ToList();
 
-        var result = await _repository.CreateProductAsync(product);
+        var result = await _repository.CreateProductAsync(product, cancellationToken);
 
         if (result.HasValue)
         {
-            await _cache.InvalidateGroupAsync(CacheKeys.ProductsGroup);
-            await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup);
+            await _cache.InvalidateGroupAsync(CacheKeys.ProductsGroup, cancellationToken);
+            await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);
         }
 
         return result;
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<ProductReadDTO>> GetProductsAsync()
+    public async Task<IReadOnlyList<ProductReadDTO>> GetProductsAsync(CancellationToken cancellationToken = default)
     {
         return await _cache.GetOrCreateAsync(
             CacheKeys.AllProducts,
 
-            async () =>
+            async ct =>
             {
-                var products = await _repository.GetProductsAsync();
+                var products = await _repository.GetProductsAsync(ct);
                 return _mapper.Map<List<ProductReadDTO>>(products);
             },
 
             CacheExpiration,
-            CacheKeys.ProductsGroup) ?? [];
+            CacheKeys.ProductsGroup,
+            cancellationToken) ?? [];
     }
 
     /// <inheritdoc/>
-    public async Task<ProductReadDTO?> GetProductByIdAsync(int id)
+    public async Task<ProductReadDTO?> GetProductByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _cache.GetOrCreateAsync(
             CacheKeys.Product(id),
 
-            async () =>
+            async ct =>
             {
-                var product = await _repository.GetProductByIdAsync(id);
+                var product = await _repository.GetProductByIdAsync(id, ct);
                 if (product is null) return null;
                 return _mapper.Map<ProductReadDTO>(product);
             },
 
             CacheExpiration,
-            CacheKeys.ProductsGroup);
+            CacheKeys.ProductsGroup,
+            cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteProductAsync(int id)
+    public async Task<bool> DeleteProductAsync(int id, CancellationToken cancellationToken = default)
     {
-        var result = await _repository.DeleteProductAsync(id);
+        var result = await _repository.DeleteProductAsync(id, cancellationToken);
 
         if (result)
         {
-            await _cache.InvalidateGroupAsync(CacheKeys.ProductsGroup);
-            await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup);
+            await _cache.InvalidateGroupAsync(CacheKeys.ProductsGroup, cancellationToken);
+            await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);
         }
 
         return result;
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateProductAsync(int id, ProductUpdateDTO dto)
+    public async Task<bool> UpdateProductAsync(int id, ProductUpdateDTO dto, CancellationToken cancellationToken = default)
     {
-        var product = await _repository.GetProductForUpdateAsync(id);
+        var product = await _repository.GetProductForUpdateAsync(id, cancellationToken);
 
         if (product is null) return false;
 
@@ -105,12 +107,12 @@ public class ProductService(IProductRepository _repository, IMapper _mapper, ICa
                 });
         }
 
-        var result = await _repository.UpdateProductAsync();
+        var result = await _repository.UpdateProductAsync(cancellationToken);
 
         if (result)
         {
-            await _cache.InvalidateGroupAsync(CacheKeys.ProductsGroup);
-            await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup);
+            await _cache.InvalidateGroupAsync(CacheKeys.ProductsGroup, cancellationToken);
+            await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);
         }
 
         return result;

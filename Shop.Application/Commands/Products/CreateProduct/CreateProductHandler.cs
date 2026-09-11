@@ -25,7 +25,7 @@ public class CreateProductHandler(
             })
             .ToList();
 
-        var result = await productRepository.CreateProductAsync(product);
+        var result = await productRepository.CreateProductAsync(product, cancellationToken);
 
         if (result.HasValue)
         {

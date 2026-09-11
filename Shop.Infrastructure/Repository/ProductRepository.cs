@@ -12,57 +12,57 @@ namespace Shop.Infrastructure.Repository;
 public class ProductRepository(ShopDbContext _context) : IProductRepository
 {
     /// <inheritdoc/>
-    public async Task<int?> CreateProductAsync(Product product)
+    public async Task<int?> CreateProductAsync(Product product, CancellationToken cancellationToken = default)
     {
-        await _context.Products.AddAsync(product);
+        await _context.Products.AddAsync(product, cancellationToken);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         return product.Id;
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<Product>> GetProductsAsync()
+    public async Task<IReadOnlyList<Product>> GetProductsAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Products
             .Include(x => x.Images)
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<Product?> GetProductByIdAsync(int id)
+    public async Task<Product?> GetProductByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Products
             .Include(x => x.Images)
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<Product?> GetProductForUpdateAsync(int id)
+    public async Task<Product?> GetProductForUpdateAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Products
             .Include(x => x.Images)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteProductAsync(int id)
+    public async Task<bool> DeleteProductAsync(int id, CancellationToken cancellationToken = default)
     {
-        var product = await _context.Products.FirstOrDefaultAsync(x => x.Id == id);
+        var product = await _context.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (product == null) return false;
 
         _context.Products.Remove(product);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         return true;
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateProductAsync()
+    public async Task<bool> UpdateProductAsync(CancellationToken cancellationToken = default)
     {
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
 }

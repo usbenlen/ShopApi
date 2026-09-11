@@ -6,21 +6,21 @@ namespace Shop.Infrastructure.Repository;
 
 public class AuthRepository(ShopDbContext context) : IAuthRepository
 {
-    public async Task<bool> IsEmailInUseAsync(string email)
+    public async Task<bool> IsEmailInUseAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await context.Users.AnyAsync(x => x.Email == email);
+        return await context.Users.AnyAsync(x => x.Email == email, cancellationToken);
     }
 
-    public async Task<User?> RegisterUserAsync(User user)
+    public async Task<User?> RegisterUserAsync(User user, CancellationToken cancellationToken = default)
     {
-        await context.Users.AddAsync(user);
-        await context.SaveChangesAsync();
+        await context.Users.AddAsync(user, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return user;
     }
 
-    public async Task<User?> GetByEmailAsync(string email)
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await context.Users.FirstOrDefaultAsync(x => x.Email == email);
+        return await context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }
 }

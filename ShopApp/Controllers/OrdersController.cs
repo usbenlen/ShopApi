@@ -40,7 +40,7 @@ public class OrdersController(IQueueService _queueService, IProductService _prod
             if (item.Count <= 0)
                 return BadRequest($"Invalid count for product {item.ProductId}");
 
-            var product = await _productService.GetProductByIdAsync(item.ProductId);
+            var product = await _productService.GetProductByIdAsync(item.ProductId, cancellationToken);
 
             if (product is null)
                 return BadRequest($"Product {item.ProductId} not found");

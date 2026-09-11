@@ -23,9 +23,9 @@ public class GetProductByIdHandler(
         return await _cache.GetOrCreateAsync(
             CacheKeys.Product(request.id),
 
-            async () =>
+            async ct =>
             {
-                var product = await _productRepository.GetProductByIdAsync(request.id);
+                var product = await _productRepository.GetProductByIdAsync(request.id, ct);
                 if (product is null) return null;
 
                 return _mapper.Map<ProductReadDTO>(product);

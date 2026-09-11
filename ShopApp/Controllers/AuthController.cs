@@ -13,9 +13,9 @@ namespace Shop.Api.Controllers;
 public class AuthController(IAuthService _authService, IPasswordService _passwordService) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterUser([FromBody] UserCreateDTO dto)
+    public async Task<IActionResult> RegisterUser([FromBody] UserCreateDTO dto, CancellationToken cancellationToken)
     {
-        var (user, accessToken, refreshToken) = await _authService.RegisterAsync(dto);
+        var (user, accessToken, refreshToken) = await _authService.RegisterAsync(dto, cancellationToken);
         if (user == null) return Conflict(new { message = "This Email is already taken" });
 
         Response.Cookies.Append(
@@ -33,9 +33,9 @@ public class AuthController(IAuthService _authService, IPasswordService _passwor
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] UserLoginDTO dto)
+    public async Task<IActionResult> Login([FromBody] UserLoginDTO dto, CancellationToken cancellationToken)
     {
-        var result = await _authService.LoginAsync(dto);
+        var result = await _authService.LoginAsync(dto, cancellationToken);
         if (result == null) return Unauthorized(new { message = "Invalid email or password" });
 
         var (accessToken, refreshToken) = result.Value;
@@ -56,12 +56,12 @@ public class AuthController(IAuthService _authService, IPasswordService _passwor
 
     [HttpPost("refresh")]
     // з Refresh Token Rotation
-    public async Task<IActionResult> Refresh()
+    public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
         var refreshToken = Request.Cookies["refresh_token"];
         if (string.IsNullOrEmpty(refreshToken)) return Unauthorized(new { message = "Refresh token not found" });
 
-        var result = await _authService.RefreshAsync(refreshToken);
+        var result = await _authService.RefreshAsync(refreshToken, cancellationToken);
         if (result == null) return Unauthorized(new { message = "Invalid refresh token" });
 
         var (accessToken, newRefreshToken) = result.Value;

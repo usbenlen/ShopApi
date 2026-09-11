@@ -6,12 +6,12 @@ namespace Shop.Application.Interfaces.Services;
 
 public interface ICategoryService
 {
-    Task<int?> CreateCategoryAsync(CategoryCreateDTO dto);
-    Task<IReadOnlyList<CategoryReadDTO>> GetCategoriesAsync();
-    Task<CategoryReadDTO?> GetCategoryByIdAsync(int id);
-    Task<bool> DeleteCategoryAsync(int id);
-    Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto);
-    Task<IReadOnlyList<CategoryReadDTO>> GetParentCategoriesAsync(int id);
-    Task<IReadOnlyList<CategoryReadDTO>> GetChildCategoriesAsync(int id);
-    Task<CategoryTreeDTO?> GetCategoryTreeAsync(int id);
+    Task<int?> CreateCategoryAsync(CategoryCreateDTO dto, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CategoryReadDTO>> GetCategoriesAsync(CancellationToken cancellationToken = default);
+    Task<CategoryReadDTO?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteCategoryAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CategoryReadDTO>> GetParentCategoriesAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CategoryReadDTO>> GetChildCategoriesAsync(int id, CancellationToken cancellationToken = default);
+    Task<CategoryTreeDTO?> GetCategoryTreeAsync(int id, CancellationToken cancellationToken = default);
 }

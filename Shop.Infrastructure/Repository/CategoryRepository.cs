@@ -8,60 +8,60 @@ namespace Shop.Infrastructure.Repository;
 
 public class CategoryRepository(ShopDbContext _context) : ICategoryRepository
 {
-    public async Task<int?> CreateCategoryAsync(Category category)
+    public async Task<int?> CreateCategoryAsync(Category category, CancellationToken cancellationToken = default)
     {
-        await _context.Categories.AddAsync(category);
-        await _context.SaveChangesAsync();
+        await _context.Categories.AddAsync(category, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         return category.Id;
     }
 
-    public async Task<IReadOnlyList<Category>> GetCategoriesAsync()
+    public async Task<IReadOnlyList<Category>> GetCategoriesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Categories
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<Category?> GetCategoryBySlugAsync(string slug)
+    public async Task<Category?> GetCategoryBySlugAsync(string slug, CancellationToken cancellationToken = default)
     {
         return await _context.Categories
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Slug == slug);
+            .FirstOrDefaultAsync(c => c.Slug == slug, cancellationToken);
     }
 
-    public async Task<Category?> GetCategoryByIdAsync(int id)
+    public async Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Categories
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
-    public async Task<Category?> GetCategoryForUpdateAsync(int id)
+    public async Task<Category?> GetCategoryForUpdateAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+        return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
-    public async Task<bool> DeleteCategoryAsync(int id)
+    public async Task<bool> DeleteCategoryAsync(int id, CancellationToken cancellationToken = default)
     {
-        var category = await _context.Categories.FindAsync(id);
+        var category = await _context.Categories.FindAsync(id, cancellationToken);
         if (category == null) return false;
 
         _context.Categories.Remove(category);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         return true;
     }
 
-    public async Task<bool> UpdateCategoryAsync()
+    public async Task<bool> UpdateCategoryAsync(CancellationToken cancellationToken = default)
     {
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
 
-    public async Task<IReadOnlyList<Category>> GetParentCategoriesAsync(int id)
+    public async Task<IReadOnlyList<Category>> GetParentCategoriesAsync(int id, CancellationToken cancellationToken = default)
     {
-        var categories = await _context.Categories.AsNoTracking().ToListAsync();
+        var categories = await _context.Categories.AsNoTracking().ToListAsync(cancellationToken);
         var dict = categories.ToDictionary(x => x.Id);
         var result = new List<Category>();
 
@@ -79,29 +79,29 @@ public class CategoryRepository(ShopDbContext _context) : ICategoryRepository
         return result;
     }
 
-    public async Task<IReadOnlyList<Category>> GetChildCategoriesAsync(int id)
+    public async Task<IReadOnlyList<Category>> GetChildCategoriesAsync(int id, CancellationToken cancellationToken = default)
     {
-        var categories = await _context.Categories.AsNoTracking().ToListAsync();
+        var categories = await _context.Categories.AsNoTracking().ToListAsync(cancellationToken);
         var result = new List<Category>();
 
-        void FindChildren(int parentId)
+        void FindChildren(int parentId, CancellationToken cancellationToken = default)
         {
             var children = categories.Where(x => x.ParentId == parentId).ToList();
 
             foreach (var child in children)
             {
                 result.Add(child);
-                FindChildren(child.Id);
+                FindChildren(child.Id, cancellationToken);
             }
         }
 
-        FindChildren(id);
+        FindChildren(id, cancellationToken);
         return result;
     }
 
-    public async Task<Category?> GetCategoryTreeAsync(int id)
+    public async Task<Category?> GetCategoryTreeAsync(int id, CancellationToken cancellationToken = default)
     {
-        var categories = await _context.Categories.AsNoTracking().ToListAsync();
+        var categories = await _context.Categories.AsNoTracking().ToListAsync(cancellationToken);
         var dict = categories.ToDictionary(x => x.Id);
 
         var lookup = categories.ToLookup(c => c.ParentId);

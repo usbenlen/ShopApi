@@ -75,7 +75,7 @@ public class EmailService(
 
         await SendEmailAsync(
             email,
-            "Встановлення пароля — Shop",
+            "Встановлення пароля - Shop",
             body,
             cancellationToken);
     }
@@ -241,9 +241,7 @@ public class EmailService(
                 _settings.Password)
         };
 
-        cancellationToken.ThrowIfCancellationRequested();
-
-        await client.SendMailAsync(message);
+        await client.SendMailAsync(message, cancellationToken);
     }
 
     public async Task SendOrderConfirmationEmailAsync(string email, IReadOnlyList<OrderProcessingProductDTO> products, decimal totalPrice, int orderId, CancellationToken cancellationToken = default)

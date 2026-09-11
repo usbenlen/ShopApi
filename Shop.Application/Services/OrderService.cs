@@ -51,7 +51,7 @@ public class OrderService(IOrderRepository orderRepository, IUserRepository user
             throw new InvalidOperationException("Order could not be processed");
 
         // кількість товару змінилась, чистим product cache
-        await cache.InvalidateGroupAsync(CacheKeys.ProductsGroup);
+        await cache.InvalidateGroupAsync(CacheKeys.ProductsGroup, cancellationToken);
 
         await emailService.SendOrderConfirmationEmailAsync(
             email,

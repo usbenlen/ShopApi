@@ -13,113 +13,118 @@ public class CategoryService(ICategoryRepository _repository, IMapper _mapper, I
 {
     private readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(_cacheSettings.Value.Categories.ExpirationMinutes);
 
-    public async Task<int?> CreateCategoryAsync(CategoryCreateDTO dto)
+    public async Task<int?> CreateCategoryAsync(CategoryCreateDTO dto, CancellationToken cancellationToken = default)
     {
         var category = _mapper.Map<Category>(dto);
 
-        var result = await _repository.CreateCategoryAsync(category);
+        var result = await _repository.CreateCategoryAsync(category, cancellationToken);
 
-        if (result.HasValue) await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup);
+        if (result.HasValue) await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);
 
         return result;
     }
 
-    public async Task<IReadOnlyList<CategoryReadDTO>> GetCategoriesAsync()
+    public async Task<IReadOnlyList<CategoryReadDTO>> GetCategoriesAsync(CancellationToken cancellationToken = default)
     {
         return await _cache.GetOrCreateAsync(
             CacheKeys.AllCategories,
 
-            async () =>
+            async ct =>
             {
-                var categories = await _repository.GetCategoriesAsync();
+                var categories = await _repository.GetCategoriesAsync(ct);
                 return _mapper.Map<List<CategoryReadDTO>>(categories);
             },
 
             CacheExpiration,
-            CacheKeys.CategoriesGroup) ?? [];
+            CacheKeys.CategoriesGroup,
+            cancellationToken) ?? [];
     }
 
-    public async Task<CategoryReadDTO?> GetCategoryByIdAsync(int id)
+    public async Task<CategoryReadDTO?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _cache.GetOrCreateAsync(
             CacheKeys.Category(id),
 
-            async () =>
+            async ct =>
             {
-                var category = await _repository.GetCategoryByIdAsync(id);
+                var category = await _repository.GetCategoryByIdAsync(id, ct);
                 if (category is null) return null;
                 return _mapper.Map<CategoryReadDTO>(category);
             },
 
             CacheExpiration,
-            CacheKeys.CategoriesGroup);
+            CacheKeys.CategoriesGroup,
+            cancellationToken);
     }
 
-    public async Task<bool> DeleteCategoryAsync(int id)
+    public async Task<bool> DeleteCategoryAsync(int id, CancellationToken cancellationToken = default)
     {
-        var result = await _repository.DeleteCategoryAsync(id);
+        var result = await _repository.DeleteCategoryAsync(id, cancellationToken);
 
-        if (result) await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup);
+        if (result) await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);
 
         return result;
     }
 
-    public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto)
+    public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDTO dto, CancellationToken cancellationToken = default)
     {
-        var category = await _repository.GetCategoryForUpdateAsync(id);
+        var category = await _repository.GetCategoryForUpdateAsync(id, cancellationToken);
         if (category is null) return false;
 
         _mapper.Map(dto, category);
 
-        var result = await _repository.UpdateCategoryAsync();
-        if (result) await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup);
+        var result = await _repository.UpdateCategoryAsync(cancellationToken);
+        if (result) await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);
 
         return result;
     }
 
-    public async Task<IReadOnlyList<CategoryReadDTO>> GetParentCategoriesAsync(int id)
+    public async Task<IReadOnlyList<CategoryReadDTO>> GetParentCategoriesAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _cache.GetOrCreateAsync(
             CacheKeys.ParentCategories(id),
 
-            async () =>
+            async ct =>
             {
-                var categories = await _repository.GetParentCategoriesAsync(id);
+                var categories = await _repository.GetParentCategoriesAsync(id, ct);
                 return _mapper.Map<List<CategoryReadDTO>>(categories);
             },
 
             CacheExpiration,
-            CacheKeys.CategoriesGroup) ?? [];
+            CacheKeys.CategoriesGroup,
+            cancellationToken) ?? [];
     }
 
-    public async Task<IReadOnlyList<CategoryReadDTO>> GetChildCategoriesAsync(int id)
+    public async Task<IReadOnlyList<CategoryReadDTO>> GetChildCategoriesAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _cache.GetOrCreateAsync(
             CacheKeys.ChildCategories(id),
 
-            async () =>
+            async ct =>
             {
-                var categories = await _repository.GetChildCategoriesAsync(id);
+                var categories = await _repository.GetChildCategoriesAsync(id, ct);
                 return _mapper.Map<List<CategoryReadDTO>>(categories);
             },
 
             CacheExpiration,
-            CacheKeys.CategoriesGroup) ?? [];
+            CacheKeys.CategoriesGroup,
+            cancellationToken) ?? [];
     }
 
-    public async Task<CategoryTreeDTO?> GetCategoryTreeAsync(int id)
+    public async Task<CategoryTreeDTO?> GetCategoryTreeAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _cache.GetOrCreateAsync(
             CacheKeys.CategoryTree(id),
 
-            async () =>
+            async ct =>
             {
-                var category = await _repository.GetCategoryTreeAsync(id);
+                var category = await _repository.GetCategoryTreeAsync(id, ct);
                 if (category is null) return null;
                 return _mapper.Map<CategoryTreeDTO>(category);
             },
 
             CacheExpiration,
-            CacheKeys.CategoriesGroup);
+            CacheKeys.CategoriesGroup,
+            cancellationToken);
     }
 }

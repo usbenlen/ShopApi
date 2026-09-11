@@ -17,7 +17,7 @@ public class CreateCategoryHandler(
     {
         var category = mapper.Map<Category>(request.DTO);
 
-        var result = await categoryRepository.CreateCategoryAsync(category);
+        var result = await categoryRepository.CreateCategoryAsync(category, cancellationToken);
 
         if (result.HasValue)
             await cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);

@@ -12,7 +12,7 @@ public sealed class HybridCachingService(MemoryCacheStore _l1, RedisCacheStore _
     private readonly CachingSettings _settings = _options.Value;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
-    public async Task<T?> GetOrCreateAsync<T>(string key, Func<Task<T?>> factory, TimeSpan expiration, string? group = null, CancellationToken cancellationToken = default)
+    public async Task<T?> GetOrCreateAsync<T>(string key, Func<CancellationToken, Task<T?>> factory, TimeSpan expiration, string? group = null, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -73,7 +73,7 @@ public sealed class HybridCachingService(MemoryCacheStore _l1, RedisCacheStore _
             // бд
             _logger.LogDebug("CACHE MISS -> FACTORY: {CacheKey}", key);
 
-            var value = await factory();
+            var value = await factory(cancellationToken);
 
             // -- Negative cache --
 

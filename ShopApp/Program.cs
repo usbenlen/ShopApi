@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Shop.Api.Interfaces;
+using Shop.Api.Middlewares;
+
 //using Shop.Api.Middleware;
 using Shop.Api.Services;
 using Shop.Application.Configuration;
@@ -253,6 +255,8 @@ public class Program
 
         //app.UseMiddleware<RequestTimerMiddleware>();
         //app.UseMiddleware<UserMiddlewareCheck>();
+        app.UseMiddleware<CancellationTokenHandleMiddleware>();
+
         app.UseStaticFiles(); //Доступ до папки wwwroot/images
 
         app.MapControllers();

@@ -23,10 +23,9 @@ public class GetCategoryBySlugHandler(
         return await cache.GetOrCreateAsync(
             CacheKeys.CategoryBySlug(request.Slug),
 
-            async () =>
+            async ct =>
             {
-                var category = await categoryRepository.GetCategoryBySlugAsync(request.Slug);
-
+                var category = await categoryRepository.GetCategoryBySlugAsync(request.Slug, ct);
                 if (category is null) return null;
 
                 return mapper.Map<CategoryReadDTO>(category);

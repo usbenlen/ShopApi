@@ -26,7 +26,7 @@ public class MongoProductFeedbackService : IProductFeedbackService
         _collection = database.GetCollection<ProductFeedbackDocument>("ProductFeedback");
     }
 
-    public async Task CreateAsync(int productId, Guid userId, ProductFeedbackCreateDTO dto)
+    public async Task CreateAsync(int productId, Guid userId, ProductFeedbackCreateDTO dto, CancellationToken cancellationToken = default)
     {
         var document = new ProductFeedbackDocument
         {
@@ -38,6 +38,6 @@ public class MongoProductFeedbackService : IProductFeedbackService
             CreatedAt = DateTime.UtcNow
         };
 
-        await _collection.InsertOneAsync(document);
+        await _collection.InsertOneAsync(document, cancellationToken: cancellationToken);
     }
 }

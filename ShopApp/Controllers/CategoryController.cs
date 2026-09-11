@@ -17,10 +17,10 @@ public class CategoryController(ICategoryService _categoryService, IImageService
 {
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> CreateCategory([FromForm] CategoryCreateRequest dto)
+    public async Task<IActionResult> CreateCategory([FromForm] CategoryCreateRequest dto, CancellationToken cancellationToken)
     {
         if (dto.Image != null) 
-            dto.ImageURL = (await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"])) ?? string.Empty;
+            dto.ImageURL = (await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"], cancellationToken)) ?? string.Empty;
 
         var createDTO = new CategoryCreateDTO
         {
@@ -31,7 +31,7 @@ public class CategoryController(ICategoryService _categoryService, IImageService
             ParentId = dto.ParentId,
         };
 
-        int? id = await _mediator.Send(new CreateCategoryCommand(createDTO));
+        int? id = await _mediator.Send(new CreateCategoryCommand(createDTO), cancellationToken);
         //int? id = await _categoryService.CreateCategoryAsync(createDTO);
         return Ok($"Category created {id}"); // 200 status
         //return CreatedAtAction(
@@ -41,17 +41,17 @@ public class CategoryController(ICategoryService _categoryService, IImageService
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCategories()
+    public async Task<IActionResult> GetCategories(CancellationToken cancellationToken)
     {
-        var categories = await _categoryService.GetCategoriesAsync();
+        var categories = await _categoryService.GetCategoriesAsync(cancellationToken);
 
         return Ok(categories);
     }
 
     [HttpGet("id/{id}")]
-    public async Task<IActionResult> GetCategoryById(int id)
+    public async Task<IActionResult> GetCategoryById(int id, CancellationToken cancellationToken)
     {
-        var category = await _mediator.Send(new GetCategoryByIdQuery(id));
+        var category = await _mediator.Send(new GetCategoryByIdQuery(id), cancellationToken);
         //var category = await _categoryService.GetCategoryByIdAsync(id);
         if (category == null) return NotFound();
 
@@ -59,9 +59,9 @@ public class CategoryController(ICategoryService _categoryService, IImageService
     }
 
     [HttpGet("{slug}")]
-    public async Task<ActionResult<CategoryReadDTO>> GetCategoryBySlug(string slug)
+    public async Task<ActionResult<CategoryReadDTO>> GetCategoryBySlug(string slug, CancellationToken cancellationToken)
     {
-        var category = await _mediator.Send(new GetCategoryBySlugQuery(slug));
+        var category = await _mediator.Send(new GetCategoryBySlugQuery(slug), cancellationToken);
         if (category is null) return NotFound();
 
         return Ok(category);
@@ -69,49 +69,49 @@ public class CategoryController(ICategoryService _categoryService, IImageService
 
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCategory(int id)
+    public async Task<IActionResult> DeleteCategory(int id, CancellationToken cancellationToken)
     {
-        bool deleted = await _categoryService.DeleteCategoryAsync(id);
+        bool deleted = await _categoryService.DeleteCategoryAsync(id, cancellationToken);
         if (!deleted) return NotFound();
 
         return NoContent();
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCategory(int id, [FromForm] CategoryUpdateRequest dto)
+    public async Task<IActionResult> UpdateCategory(int id, [FromForm] CategoryUpdateRequest dto, CancellationToken cancellationToken)
     {
         if (dto.Image != null)
         {
-            string? url = await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"]);
+            string? url = await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"], cancellationToken);
             dto.ImageURL = url;
         }
 
-        bool updated = await _categoryService.UpdateCategoryAsync(id, dto);
+        bool updated = await _categoryService.UpdateCategoryAsync(id, dto, cancellationToken);
         if (!updated) return NotFound("Category not found");
 
         return Ok("Category updated");
     }
 
     [HttpGet("{id}/parents")]
-    public async Task<IActionResult> GetParents(int id)
+    public async Task<IActionResult> GetParents(int id, CancellationToken cancellationToken)
     {
-        var categories = await _categoryService.GetParentCategoriesAsync(id);
+        var categories = await _categoryService.GetParentCategoriesAsync(id, cancellationToken);
 
         return Ok(categories);
     }
 
     [HttpGet("{id}/children")]
-    public async Task<IActionResult> GetChildren(int id)
+    public async Task<IActionResult> GetChildren(int id, CancellationToken cancellationToken)
     {
-        var categories = await _categoryService.GetChildCategoriesAsync(id);
+        var categories = await _categoryService.GetChildCategoriesAsync(id, cancellationToken);
 
         return Ok(categories);
     }
 
     [HttpGet("{id}/tree")]
-    public async Task<IActionResult> GetTree(int id)
+    public async Task<IActionResult> GetTree(int id, CancellationToken cancellationToken)
     {
-        var tree = await _categoryService.GetCategoryTreeAsync(id);
+        var tree = await _categoryService.GetCategoryTreeAsync(id, cancellationToken);
         if (tree == null) return NotFound();
 
         return Ok(tree);

@@ -21,7 +21,7 @@ public class AuthService(
     {
         var email = NormalizeEmail(dto.Email);
 
-        if (await repository.IsEmailInUseAsync(email))
+        if (await repository.IsEmailInUseAsync(email, cancellationToken))
             return (null, null, null);
 
         var user = mapper.Map<User>(dto);
@@ -29,7 +29,7 @@ public class AuthService(
         user.Email = email;
         user.PasswordHash = hashHelper.Hash(dto.Password);
 
-        await repository.RegisterUserAsync(user);
+        await repository.RegisterUserAsync(user, cancellationToken);
 
         await queueService.PublishAsync(
             RabbitMqQueues.Users,
@@ -44,7 +44,7 @@ public class AuthService(
 
         var refreshToken =refreshTokenService.GenerateRefreshToken(user.Id);
 
-        await refreshTokenRepository.AddAsync(refreshToken);
+        await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
 
         var refreshTokenDTO = new RefreshTokenDTO
         {
@@ -58,11 +58,11 @@ public class AuthService(
             refreshTokenDTO);
     }
 
-    public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> LoginAsync(UserLoginDTO dto)
+    public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> LoginAsync(UserLoginDTO dto, CancellationToken cancellationToken = default)
     {
         var email = NormalizeEmail(dto.Email);
 
-        var user = await repository.GetByEmailAsync(email);
+        var user = await repository.GetByEmailAsync(email, cancellationToken);
 
         if (user == null || !user.IsActive) return null;
         if (!hashHelper.IsPasswordValid(dto.Password,user.PasswordHash))
@@ -71,7 +71,7 @@ public class AuthService(
         var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(user));
         var refreshToken = refreshTokenService.GenerateRefreshToken(user.Id);
 
-        await refreshTokenRepository.AddAsync(refreshToken);
+        await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
 
         var refreshTokenDTO = new RefreshTokenDTO
         {
@@ -82,22 +82,22 @@ public class AuthService(
         return (accessToken, refreshTokenDTO);
     }
 
-    public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> RefreshAsync(string token)
+    public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> RefreshAsync(string token, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(token)) return null;
 
-        var oldRefreshToken = await refreshTokenRepository.GetByTokenAsync(token);
+        var oldRefreshToken = await refreshTokenRepository.GetByTokenAsync(token, cancellationToken);
 
         if (oldRefreshToken == null || !oldRefreshToken.IsActive || oldRefreshToken.User == null || !oldRefreshToken.User.IsActive)
             return null;
 
         oldRefreshToken.IsRevoked = true;
 
-        await refreshTokenRepository.UpdateAsync(oldRefreshToken);
+        await refreshTokenRepository.UpdateAsync(oldRefreshToken, cancellationToken);
 
         var newRefreshToken = refreshTokenService.GenerateRefreshToken(oldRefreshToken.UserId);
 
-        await refreshTokenRepository.AddAsync(newRefreshToken);
+        await refreshTokenRepository.AddAsync(newRefreshToken, cancellationToken);
 
         var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(oldRefreshToken.User));
 

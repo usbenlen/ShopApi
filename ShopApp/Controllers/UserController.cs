@@ -14,9 +14,9 @@ public class UserController(IUserService _userService) : ControllerBase
     /// Створити нового Admin або Moderator
     /// </summary>
     [HttpPost("staff")]
-    public async Task<IActionResult> CreateStaff([FromBody] CreateStaffUserDTO dto)
+    public async Task<IActionResult> CreateStaff([FromBody] CreateStaffUserDTO dto, CancellationToken cancellationToken)
     {
-        var user = await _userService.CreateStaffAsync(dto);
+        var user = await _userService.CreateStaffAsync(dto, cancellationToken);
 
         if (user == null)
             return Conflict(new
@@ -31,9 +31,9 @@ public class UserController(IUserService _userService) : ControllerBase
     /// Отримати всіх користувачів
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var users = await _userService.GetAllAsync();
+        var users = await _userService.GetAllAsync(cancellationToken);
 
         return Ok(users);
     }
@@ -42,9 +42,9 @@ public class UserController(IUserService _userService) : ControllerBase
     /// Отримати користувача
     /// </summary>
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var user = await _userService.GetByIdAsync(id);
+        var user = await _userService.GetByIdAsync(id, cancellationToken);
 
         if (user == null) return NotFound();
 
@@ -55,9 +55,9 @@ public class UserController(IUserService _userService) : ControllerBase
     /// Змінити роль користувача
     /// </summary>
     [HttpPut("{id:guid}/role")]
-    public async Task<IActionResult> UpdateRole(Guid id, [FromBody] UpdateUserRoleDTO dto)
+    public async Task<IActionResult> UpdateRole(Guid id, [FromBody] UpdateUserRoleDTO dto, CancellationToken cancellationToken)
     {
-        var result = await _userService.UpdateRoleAsync(id, dto);
+        var result = await _userService.UpdateRoleAsync(id, dto, cancellationToken);
 
         if (!result) return NotFound();
 
@@ -71,9 +71,9 @@ public class UserController(IUserService _userService) : ControllerBase
     /// Активувати або деактивувати користувача
     /// </summary>
     [HttpPut("{id:guid}/status")]
-    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateUserStatusDTO dto)
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateUserStatusDTO dto, CancellationToken cancellationToken)
     {
-        var result = await _userService.UpdateStatusAsync(id, dto);
+        var result = await _userService.UpdateStatusAsync(id, dto, cancellationToken);
 
         if (!result) return NotFound();
 

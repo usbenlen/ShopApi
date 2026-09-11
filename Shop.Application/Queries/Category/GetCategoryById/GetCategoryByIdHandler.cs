@@ -23,9 +23,9 @@ public class GetCategoryByIdHandler(
         return await cache.GetOrCreateAsync(
             CacheKeys.Category(request.id),
 
-            async () =>
+            async ct =>
             {
-                var category = await categoryRepository.GetCategoryByIdAsync(request.id);
+                var category = await categoryRepository.GetCategoryByIdAsync(request.id, ct);
                 if (category is null)return null;
 
                 return mapper.Map<CategoryReadDTO>(category);
