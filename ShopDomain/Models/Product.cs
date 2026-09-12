@@ -39,6 +39,19 @@ public class Product : BaseEntity
     public decimal Price { get; set; }
 
     /// <summary>
+    /// Ціна товару до знижки
+    /// </summary>
+    [Column("old_price", TypeName = "decimal(18,2)")]
+    public decimal? OldPrice { get; set; }
+
+    /// <summary>
+    /// Чи має товар активну знижку
+    /// </summary>
+    [Column("is_discounted")]
+    public bool IsDiscounted { get; set; }
+
+
+    /// <summary>
     /// Кількість продукту на складі
     /// </summary>
     [Column("stock_qty")]
@@ -50,10 +63,11 @@ public class Product : BaseEntity
     [Column("is_active")]
     public bool IsActive { get; set; } = true;
 
-    // FK до категорії    [Required]
+    // FK до категорії
     /// <summary>
     /// До якої категорії продукт належить
     /// </summary>
+    [Required]
     [Column("category_id")]
     public int CategoryId { get; set; }
 

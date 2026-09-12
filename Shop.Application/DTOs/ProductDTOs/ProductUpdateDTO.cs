@@ -16,6 +16,16 @@ public class ProductUpdateDTO
     public decimal? Price { get; set; }
 
     /// <summary>
+    /// Ціна продукту
+    /// </summary>
+    public decimal? OldPrice { get; set; }
+
+    /// <summary>
+    /// Чи має товар активну знижку
+    /// </summary>
+    public bool IsDiscounted { get; set; }
+
+    /// <summary>
     /// Опис продукту
     /// </summary>
     public string? Description { get; set; }
@@ -34,11 +44,4 @@ public class ProductUpdateDTO
     /// Ідентифікатор категорії
     /// </summary>
     public int? CategoryId { get; set; }
-
-    /// <summary>
-    /// Список фотографій продукту
-    /// </summary>
-    public List<string>? Images { get; set; }
-    // Щоб бачити які є картинки на сайті у товару, та можливість їх коригувати, видалити або додати ще. Треба створити нові ендпоїнти та реалізацію того що нижче
-    // public List<int>? DeleteImages { get; set; } // видалити картинки [1,3] 
 }

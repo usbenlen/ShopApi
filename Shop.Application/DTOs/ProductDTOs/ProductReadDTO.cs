@@ -16,9 +16,19 @@ public class ProductReadDTO
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Ціна продукту
+    /// Ціна товару до знижки
     /// </summary>
     public decimal Price { get; set; }
+
+    /// <summary>
+    /// Ціна продукту
+    /// </summary>
+    public decimal? OldPrice { get; set; }
+
+    /// <summary>
+    /// Чи має товар активну знижку
+    /// </summary>
+    public bool IsDiscounted { get; set; }
 
     /// <summary>
     /// Опис продукту
@@ -43,5 +53,5 @@ public class ProductReadDTO
     /// <summary>
     /// Список URL фотографій продукту
     /// </summary>
-    public List<string> Images { get; set; } = [];
+    public List<ProductImageReadDTO> Images { get; set; } = [];
 }

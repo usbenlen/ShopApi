@@ -19,6 +19,16 @@ public class ProductCreateDTO
     public decimal Price { get; set; }
 
     /// <summary>
+    /// Ціна продукту
+    /// </summary>
+    public decimal? OldPrice { get; set; }
+
+    /// <summary>
+    /// Чи має товар активну знижку
+    /// </summary>
+    public bool IsDiscounted { get; set; }
+
+    /// <summary>
     /// Опис продукту
     /// </summary>
     public string Description { get; set; } = string.Empty;

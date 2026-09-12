@@ -11,18 +11,15 @@ public class ProductProfile : Profile
         CreateMap<ProductCreateDTO, Product>()
             .ForMember(dest => dest.Images, opt => opt.Ignore());
 
-        CreateMap<Product, ProductReadDTO>()
-            .ForMember(dest => dest.Images,
-                opt => opt.MapFrom(src =>
-                    src.Images.Select(x => x.Url).ToList()));
+        CreateMap<ProductImage, ProductImageReadDTO>();
+
+        CreateMap<Product, ProductReadDTO>();
 
         CreateMap<ProductUpdateDTO, Product>()
             .ForMember(dest => dest.Images, opt => opt.Ignore())
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) =>
                 {
                     if (srcMember == null) return false;
-                    if (srcMember is int i && i == 0) return false;
-                    if (srcMember is decimal d && d == 0) return false;
 
                     return true;
                 }));
