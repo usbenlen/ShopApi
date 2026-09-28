@@ -16,12 +16,12 @@ public class ProductCreateDTO
     /// <summary>
     /// Ціна продукту
     /// </summary>
-    public decimal Price { get; set; }
+    public int Price { get; set; }
 
     /// <summary>
     /// Ціна продукту
     /// </summary>
-    public decimal? OldPrice { get; set; }
+    public int? OldPrice { get; set; }
 
     /// <summary>
     /// Чи має товар активну знижку

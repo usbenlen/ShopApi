@@ -35,14 +35,14 @@ public class Product : BaseEntity
     /// Ціна продукту
     /// </summary>
     [Required]
-    [Column("price", TypeName = "decimal(18,2)")]
-    public decimal Price { get; set; }
+    [Column("price")]
+    public int Price { get; set; }
 
     /// <summary>
     /// Ціна товару до знижки
     /// </summary>
-    [Column("old_price", TypeName = "decimal(18,2)")]
-    public decimal? OldPrice { get; set; }
+    [Column("old_price")]
+    public int? OldPrice { get; set; }
 
     /// <summary>
     /// Чи має товар активну знижку

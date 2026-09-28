@@ -15,9 +15,8 @@ public class User : BaseEntity
     [Column("email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
     [Column("password_hash")]
-    public string PasswordHash { get; set; } = string.Empty;
+    public string? PasswordHash { get; set; }
 
     [Column("role")]
     public UserRole Role { get; set; } = UserRole.User;
@@ -25,8 +24,12 @@ public class User : BaseEntity
     [Column("is_active")]
     public bool IsActive { get; set; } = true;
 
+    [Column("is_email_verified")]
+    public bool IsEmailVerified { get; set; } = false;
+
     //navigation
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     public ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
+    public ICollection<UserProvider> UserProviders { get; set; } = new List<UserProvider>();
 }

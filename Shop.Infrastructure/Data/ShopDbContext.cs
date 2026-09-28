@@ -18,6 +18,8 @@ public class ShopDbContext : DbContext
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderDetail> OrderDetails { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
+    public DbSet<Provider> Providers { get; set; }
+    public DbSet<UserProvider> UserProviders { get; set; }
 
     // Автоматично встановлює CreatedAt і UpdatedAt перед збереженням
     public override int SaveChanges()
@@ -150,5 +152,46 @@ public class ShopDbContext : DbContext
                   .HasForeignKey(od => od.ProductId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
+
+        // --- Provider ---
+        modelBuilder.Entity<Provider>(entity =>
+        {
+            entity.HasIndex(p => p.Name)
+                  .IsUnique();
+
+            entity.Property(p => p.Name)
+                  .HasMaxLength(50);
+        });
+
+        // --- UserProvider ---
+        modelBuilder.Entity<UserProvider>(entity =>
+        {
+            entity.HasOne(up => up.User)
+                  .WithMany(u => u.UserProviders)
+                  .HasForeignKey(up => up.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(up => up.Provider)
+                  .WithMany(p => p.UserProviders)
+                  .HasForeignKey(up => up.ProviderId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(up => new
+            {
+                up.UserId,
+                up.ProviderId
+            })
+            .IsUnique();
+
+            entity.HasIndex(up => new
+            {
+                up.ProviderId,
+                up.NumberProvider
+            })
+            .IsUnique();
+
+            entity.Property(up => up.NumberProvider).HasMaxLength(255);
+        });
+
     }
 }

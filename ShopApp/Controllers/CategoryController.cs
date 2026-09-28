@@ -1,26 +1,37 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shop.Api.Interfaces;
 using Shop.Api.Requests.Categories;
 using Shop.Application.Commands.Categories.CreateCategory;
 using Shop.Application.DTOs.CategoryDTOs;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Queries.Category.GetCategoryById;
 using Shop.Application.Queries.Category.GetCategoryBySlug;
+using FluentValidation;
 
 namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] //https://ip:port/api/category
-public class CategoryController(ICategoryService _categoryService, IImageService _imageService, IConfiguration _configuration, IMediator _mediator) : ControllerBase
+public class CategoryController(ICategoryService _categoryService, IImageService _imageService, IConfiguration _configuration, IMediator _mediator, IValidator<CategoryCreateDTO> _validator) : ControllerBase
 {
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> CreateCategory([FromForm] CategoryCreateRequest dto, CancellationToken cancellationToken)
     {
-        if (dto.Image != null) 
-            dto.ImageURL = (await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"], cancellationToken)) ?? string.Empty;
+        if (dto.Image != null)
+        {
+            await using var stream = dto.Image.OpenReadStream();
+
+            dto.ImageURL =
+                await _imageService.SaveFileAsync(
+                    stream,
+                    dto.Image.FileName,
+                    dto.Image.ContentType,
+                    _configuration["DirnameForFiles:Categories"] ?? "Categories",
+                    cancellationToken)
+                ?? string.Empty;
+        }
 
         var createDTO = new CategoryCreateDTO
         {
@@ -30,6 +41,10 @@ public class CategoryController(ICategoryService _categoryService, IImageService
             ImageURL = dto.ImageURL,
             ParentId = dto.ParentId,
         };
+
+        // Валідація DTO
+        var result = await _validator.ValidateAsync(createDTO, cancellationToken);
+        if (!result.IsValid) return BadRequest(result.Errors);
 
         int? id = await _mediator.Send(new CreateCategoryCommand(createDTO), cancellationToken);
         //int? id = await _categoryService.CreateCategoryAsync(createDTO);
@@ -82,8 +97,15 @@ public class CategoryController(ICategoryService _categoryService, IImageService
     {
         if (dto.Image != null)
         {
-            string? url = await _imageService.SaveFileAsync(dto.Image, _configuration["DirnameForFiles:Categories"], cancellationToken);
-            dto.ImageURL = url;
+            await using var stream = dto.Image.OpenReadStream();
+
+            dto.ImageURL =
+                await _imageService.SaveFileAsync(
+                    stream,
+                    dto.Image.FileName,
+                    dto.Image.ContentType,
+                    _configuration["DirnameForFiles:Categories"] ?? "Categories",
+                    cancellationToken);
         }
 
         bool updated = await _categoryService.UpdateCategoryAsync(id, dto, cancellationToken);

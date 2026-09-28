@@ -19,9 +19,11 @@ public class CreateProductHandler(
         var product = mapper.Map<Product>(request.DTO);
 
         product.Images = request.DTO.Images
-            .Select(x => new ProductImage
+            .Select((x, index) => new ProductImage
             {
-                Url = x
+                Url = x,
+                IsPrimary = index == 0,
+                SortOrder = index
             })
             .ToList();
 

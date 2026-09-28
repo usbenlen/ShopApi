@@ -87,34 +87,35 @@ public class ProductService(IProductRepository _repository, IMapper _mapper, ICa
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateProductAsync(int id, ProductUpdateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateProductAsync(
+    int id,
+    ProductUpdateDTO dto,
+    CancellationToken cancellationToken = default)
     {
-        var product = await _repository.GetProductForUpdateAsync(id, cancellationToken);
+        var product = await _repository.GetProductForUpdateAsync(
+            id,
+            cancellationToken);
 
-        if (product is null) return false;
+        if (product is null)
+            return false;
 
         _mapper.Map(dto, product);
 
-        if (dto.Images != null)
-        {
-            product.Images.Clear();
-
-            foreach (var image in dto.Images)
-                product.Images.Add(new ProductImage
-                {
-                    Url = image,
-                    ProductId = id
-                });
-        }
-
-        var result = await _repository.UpdateProductAsync(cancellationToken);
+        var result = await _repository.UpdateProductAsync(
+            cancellationToken);
 
         if (result)
         {
-            await _cache.InvalidateGroupAsync(CacheKeys.ProductsGroup, cancellationToken);
-            await _cache.InvalidateGroupAsync(CacheKeys.CategoriesGroup, cancellationToken);
+            await _cache.InvalidateGroupAsync(
+                CacheKeys.ProductsGroup,
+                cancellationToken);
+
+            await _cache.InvalidateGroupAsync(
+                CacheKeys.CategoriesGroup,
+                cancellationToken);
         }
 
         return result;
     }
+
 }

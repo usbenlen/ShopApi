@@ -4,6 +4,7 @@ using Shop.Application.DTOs.UserDTOs;
 using Shop.Application.Interfaces.Helpers;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
+using Shop.Domain.Enums;
 using Shop.Domain.Models;
 
 namespace Shop.Application.Services;
@@ -15,7 +16,10 @@ public class AuthService(
     IJWTService jwtService,
     IRefreshTokenService refreshTokenService,
     IRefreshTokenRepository refreshTokenRepository,
-    IQueueService queueService)
+    IQueueService queueService,
+    IUserProviderRepository userProviderRepository,
+    IProviderRepository providerRepository
+)
     : IAuthService
 {
     public async Task<(UserReadDTO? User, string? AccessToken, RefreshTokenDTO? RefreshToken)> RegisterAsync(UserCreateDTO dto, CancellationToken cancellationToken = default)
@@ -106,6 +110,72 @@ public class AuthService(
         {
             Token = newRefreshToken.Token,
             ExpiresAt = newRefreshToken.ExpiresAt
+        };
+
+        return (accessToken, refreshTokenDTO);
+    }
+
+    public async Task<(string AccessToken, RefreshTokenDTO RefreshToken)?> LoginWithGoogleAsync(string googleId, string email, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(googleId) || string.IsNullOrWhiteSpace(email))
+            return null;
+
+        email = NormalizeEmail(email);
+
+        var provider = await providerRepository.GetByNameAsync(AuthProvider.Google.ToString(), cancellationToken);
+
+        if (provider == null)
+            throw new InvalidOperationException("Google provider is not configured.");
+
+        var userProvider = await userProviderRepository.GetAsync(provider.Id, googleId, cancellationToken);
+
+        User? user;
+
+        if (userProvider != null)
+        {
+            user = userProvider.User;
+
+            if (user == null || !user.IsActive) return null;
+        }
+        else
+        {
+            user = await repository.GetByEmailAsync(email, cancellationToken);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Email = email,
+                    PasswordHash = null,
+                    Role = UserRole.User,
+                    IsActive = true,
+                    IsEmailVerified = true
+                };
+
+                await repository.RegisterUserAsync(user, cancellationToken);
+            }
+            else if (!user.IsActive) return null;
+
+            await userProviderRepository.AddAsync(
+                new UserProvider
+                {
+                    UserId = user.Id,
+                    ProviderId = provider.Id,
+                    NumberProvider = googleId
+                },
+                cancellationToken);
+        }
+
+        var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(user));
+
+        var refreshToken = refreshTokenService.GenerateRefreshToken(user.Id);
+
+        await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+
+        var refreshTokenDTO = new RefreshTokenDTO
+        {
+            Token = refreshToken.Token,
+            ExpiresAt = refreshToken.ExpiresAt
         };
 
         return (accessToken, refreshTokenDTO);

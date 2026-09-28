@@ -18,6 +18,9 @@ public class ProductImage : BaseEntity
     [Column("is_primary")]
     public bool IsPrimary { get; set; } = false;
 
+    [Column("sort_order")]
+    public int SortOrder { get; set; }
+
     [Column("product_id")]
     public int ProductId { get; set; }
 

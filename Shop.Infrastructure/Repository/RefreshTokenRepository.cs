@@ -31,9 +31,7 @@ public class RefreshTokenRepository(ShopDbContext context) : IRefreshTokenReposi
     public async Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         await context.RefreshTokens
-            .Where(x =>
-                x.UserId == userId &&
-                !x.IsRevoked)
+            .Where(x => x.UserId == userId && !x.IsRevoked)
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(x => x.IsRevoked, true), 
                 cancellationToken);

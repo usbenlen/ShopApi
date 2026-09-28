@@ -244,8 +244,8 @@ namespace Shop.Infrastructure.Migrations
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("name");
 
-                    b.Property<decimal?>("OldPrice")
-                        .HasColumnType("decimal(18,2)")
+                    b.Property<int?>("OldPrice")
+                        .HasColumnType("int")
                         .HasColumnName("old_price");
 
                     b.Property<decimal>("Price")
@@ -288,6 +288,10 @@ namespace Shop.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("product_id");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
@@ -302,6 +306,29 @@ namespace Shop.Infrastructure.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("product_images");
+                });
+
+            modelBuilder.Entity("Shop.Domain.Models.Provider", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("providers");
                 });
 
             modelBuilder.Entity("Shop.Domain.Models.RefreshToken", b =>
@@ -368,8 +395,11 @@ namespace Shop.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_email_verified");
+
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("password_hash");
 
@@ -447,6 +477,48 @@ namespace Shop.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("user_addresses");
+                });
+
+            modelBuilder.Entity("Shop.Domain.Models.UserProvider", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("NumberProvider")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("number_provider");
+
+                    b.Property<int>("ProviderId")
+                        .HasColumnType("int")
+                        .HasColumnName("provider_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProviderId", "NumberProvider")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ProviderId")
+                        .IsUnique();
+
+                    b.ToTable("user_providers");
                 });
 
             modelBuilder.Entity("Shop.Domain.Models.Category", b =>
@@ -544,6 +616,25 @@ namespace Shop.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Shop.Domain.Models.UserProvider", b =>
+                {
+                    b.HasOne("Shop.Domain.Models.Provider", "Provider")
+                        .WithMany("UserProviders")
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Shop.Domain.Models.User", "User")
+                        .WithMany("UserProviders")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Provider");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Shop.Domain.Models.Category", b =>
                 {
                     b.Navigation("Products");
@@ -561,6 +652,11 @@ namespace Shop.Infrastructure.Migrations
                     b.Navigation("Images");
                 });
 
+            modelBuilder.Entity("Shop.Domain.Models.Provider", b =>
+                {
+                    b.Navigation("UserProviders");
+                });
+
             modelBuilder.Entity("Shop.Domain.Models.User", b =>
                 {
                     b.Navigation("Addresses");
@@ -568,6 +664,8 @@ namespace Shop.Infrastructure.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("UserProviders");
                 });
 #pragma warning restore 612, 618
         }

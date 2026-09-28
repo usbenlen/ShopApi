@@ -21,6 +21,20 @@ public static class AdminSeeder
         if (string.IsNullOrWhiteSpace(settings.Email) || string.IsNullOrWhiteSpace(settings.Password))
             return;
 
+        var googleProviderName = AuthProvider.Google.ToString();
+
+        var googleProvider = await context.Providers.FirstOrDefaultAsync(x => x.Name == googleProviderName);
+
+        if (googleProvider == null)
+        {
+            context.Providers.Add(new Provider
+            {
+                Name = googleProviderName
+            });
+
+            await context.SaveChangesAsync();
+        }
+
         var adminExists = await context.Users.AnyAsync(x => x.Role == UserRole.Admin);
 
         if (adminExists) return;

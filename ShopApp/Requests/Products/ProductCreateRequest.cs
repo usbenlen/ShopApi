@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Shop.Application.DTOs.ProductDTOs;
+﻿using Shop.Application.DTOs.ProductDTOs;
 
 namespace Shop.Api.Requests.Products;
 

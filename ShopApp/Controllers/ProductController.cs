@@ -1,47 +1,89 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shop.Api.Filters;
-using Shop.Api.Interfaces;
+
 using Shop.Api.Requests.Products;
+
 using Shop.Application.Commands.Products.CreateProduct;
 using Shop.Application.Commands.Products.DeleteProduct;
 using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.DTOs.ProductFeedbackDTOs;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Queries.Product.GetProductById;
+
 using Shop.Domain.Enums;
+
 using System.Security.Claims;
 
 namespace Shop.Api.Controllers;
 
-/// <summary>Контролер для роботи з продуктами</summary>
+/// <summary>
+/// Контролер для роботи з продуктами
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ProductsController(IProductService _productService, IImageService _imageService, IProductFeedbackService _productFeedbackService, IConfiguration _configuration, IMediator _mediator) : ControllerBase
+public class ProductsController(
+    IProductService productService,
+    IImageService imageService,
+    IProductFeedbackService productFeedbackService,
+    IConfiguration configuration,
+    IMediator mediator)
+    : ControllerBase
 {
-    /// <summary>Створити новий продукт разом із фотографіями</summary>
-    /// <param name="dto">Дані продукту та файли зображень</param>
-    /// <returns>Ідентифікатор створеного продукту</returns>
+    /// <summary>
+    /// Створити новий продукт разом із фотографіями
+    /// </summary>
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] ProductCreateRequest dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(
+        [FromForm] ProductCreateRequest dto,
+        CancellationToken cancellationToken)
     {
-        int maxImages = _configuration.GetValue<int>("ProductSettings:MaxImages");
-        if (dto.ImagesFiles.Count > maxImages) return BadRequest($"Maximum allowed images: {maxImages}");
+        var maxImages = configuration.GetValue<int>(
+            "ProductSettings:MaxImages");
+
+        if (dto.ImagesFiles.Count > maxImages)
+        {
+            return BadRequest(
+                $"Maximum allowed images: {maxImages}");
+        }
 
         dto.Images = [];
 
         foreach (var file in dto.ImagesFiles)
         {
-            string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"], cancellationToken);
+            if (file == null || file.Length == 0)
+                continue;
 
-            if (!string.IsNullOrEmpty(url)) dto.Images.Add(url);
+            if (string.IsNullOrWhiteSpace(file.ContentType) ||
+                !file.ContentType.StartsWith(
+                    "image/",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(
+                    $"File '{file.FileName}' is not an image.");
+            }
+
+            await using var stream = file.OpenReadStream();
+
+            var url = await imageService.SaveFileAsync(
+                stream,
+                file.FileName,
+                file.ContentType,
+                "products",
+                cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                dto.Images.Add(url);
+            }
         }
 
         var productDto = new ProductCreateDTO
         {
             Name = dto.Name,
             Price = dto.Price,
+            OldPrice = dto.OldPrice,
+            IsDiscounted = dto.IsDiscounted,
             Description = dto.Description,
             StockQty = dto.StockQty,
             IsActive = dto.IsActive,
@@ -49,70 +91,90 @@ public class ProductsController(IProductService _productService, IImageService _
             Images = dto.Images
         };
 
-        int? id = await _mediator.Send(new CreateProductCommand(productDto), cancellationToken);
-        //int? id = await _productService.CreateProductAsync(productDto);
+        var id = await mediator.Send(
+            new CreateProductCommand(productDto),
+            cancellationToken);
 
         return Ok($"Product created {id}");
     }
 
-    /// <summary>Отримати список усіх продуктів</summary>
-    /// <returns>Список продуктів</returns>
+    /// <summary>
+    /// Отримати список усіх продуктів
+    /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetProducts(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetProducts(
+        CancellationToken cancellationToken)
     {
-        var products = await _productService.GetProductsAsync(cancellationToken);
+        var products = await productService.GetProductsAsync(
+            cancellationToken);
+
         return Ok(products);
     }
 
-
-
-    /// <summary>Отримати продукт за ID</summary>
-    /// <param name="id">Ідентифікатор продукту</param>
-    /// <returns>Продукт або NotFound</returns>
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetProductById(int id, CancellationToken cancellationToken)
+    /// <summary>
+    /// Отримати продукт за ID
+    /// </summary>
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetProductById(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var product = await _mediator.Send(new GetProductByIdQuery(id), cancellationToken);
-        //var product = await _productService.GetProductByIdAsync(id);
-        if (product == null) return NotFound("Product not found");
+        var product = await mediator.Send(
+            new GetProductByIdQuery(id),
+            cancellationToken);
+
+        if (product == null)
+            return NotFound("Product not found");
 
         return Ok(product);
     }
 
-    /// <summary>Оновити існуючий продукт</summary>
-    /// <param name="id">Ідентифікатор продукту</param>
-    /// <param name="dto">Нові дані продукту</param>
-    /// <returns>Результат оновлення</returns>
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, [FromForm] ProductUpdateRequest dto, CancellationToken cancellationToken)
+    /// <summary>
+    /// Оновити існуючий продукт
+    /// </summary>
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateProduct(
+        int id,
+        [FromForm] ProductUpdateRequest dto,
+        CancellationToken cancellationToken)
     {
-        if (dto.ImagesFiles != null && dto.ImagesFiles.Count > 0)
+        var productDto = new ProductUpdateDTO
         {
-            dto.Images = [];
+            Name = dto.Name,
+            Price = dto.Price,
+            OldPrice = dto.OldPrice,
+            IsDiscounted = dto.IsDiscounted,
+            Description = dto.Description,
+            StockQty = dto.StockQty,
+            IsActive = dto.IsActive,
+            CategoryId = dto.CategoryId
+        };
 
-            foreach (var file in dto.ImagesFiles)
-            {
-                string? url = await _imageService.SaveFileAsync(file, _configuration["DirnameForFiles:Products"], cancellationToken);
-                if (!string.IsNullOrEmpty(url)) dto.Images.Add(url);
-            }
-        }
+        var updated = await productService.UpdateProductAsync(
+            id,
+            productDto,
+            cancellationToken);
 
-        bool updated = await _productService.UpdateProductAsync(id, dto, cancellationToken);
-        if (!updated) return NotFound("Product not found");
+        if (!updated)
+            return NotFound("Product not found");
 
         return Ok("Product updated");
     }
 
-    /// <summary>Видалити продукт</summary>
-    /// <param name="id">Ідентифікатор продукту</param>
-    /// <returns>Результат видалення</returns>
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id, CancellationToken cancellationToken)
+    /// <summary>
+    /// Видалити продукт
+    /// </summary>
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteProduct(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var deleted = await _mediator.Send(new DeleteProductCommand(id), cancellationToken);
-        if (deleted is null) return NotFound("Product not found");
-        //bool deleted = await _productService.DeleteProductAsync(id);
-        //if (!deleted) return NotFound("Product not found");
+        var deleted = await mediator.Send(
+            new DeleteProductCommand(id),
+            cancellationToken);
+
+        if (deleted is null)
+            return NotFound("Product not found");
 
         return NoContent();
     }
@@ -120,39 +182,62 @@ public class ProductsController(IProductService _productService, IImageService _
     /// <summary>
     /// Додати відгук або питання до продукту
     /// </summary>
-    /// <param name="id">Ідентифікатор продукту</param>
-    /// <param name="dto">Дані відгуку або питання</param>
-    /// <returns>Результат створення</returns>
     [Authorize]
-    [HttpPost("{id}/feedback")]
-    public async Task<IActionResult> CreateFeedback(int id, [FromBody] ProductFeedbackCreateDTO dto, CancellationToken cancellationToken)
+    [HttpPost("{id:int}/feedback")]
+    public async Task<IActionResult> CreateFeedback(
+        int id,
+        [FromBody] ProductFeedbackCreateDTO dto,
+        CancellationToken cancellationToken)
     {
-        if (id <= 0) return BadRequest("Invalid product id");
+        if (id <= 0)
+            return BadRequest("Invalid product id");
 
-        if (string.IsNullOrWhiteSpace(dto.Message)) 
+        if (string.IsNullOrWhiteSpace(dto.Message))
             return BadRequest("Message is required");
 
-        if (dto.Message.Length > 2000) 
-            return BadRequest("Message cannot exceed 2000 characters");
+        if (dto.Message.Length > 2000)
+            return BadRequest(
+                "Message cannot exceed 2000 characters");
 
         if (dto.Type == ProductFeedbackType.Review)
         {
-            if (!dto.Rating.HasValue || dto.Rating < 1 || dto.Rating > 5)
-                return BadRequest("Review rating must be between 1 and 5");
+            if (!dto.Rating.HasValue ||
+                dto.Rating < 1 ||
+                dto.Rating > 5)
+            {
+                return BadRequest(
+                    "Review rating must be between 1 and 5");
+            }
         }
         else if (dto.Type == ProductFeedbackType.Question)
+        {
             dto.Rating = null;
+        }
 
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+        var userIdClaim = User.FindFirst(
+            ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null ||
+            !Guid.TryParse(
+                userIdClaim.Value,
+                out var userId))
+        {
             return Unauthorized();
+        }
 
-        var product = await _productService.GetProductByIdAsync(id, cancellationToken);
-        if (product == null) return NotFound("Product not found");
+        var product = await productService.GetProductByIdAsync(
+            id,
+            cancellationToken);
 
-        await _productFeedbackService.CreateAsync(id, userId, dto, cancellationToken);
+        if (product == null)
+            return NotFound("Product not found");
+
+        await productFeedbackService.CreateAsync(
+            id,
+            userId,
+            dto,
+            cancellationToken);
 
         return Ok("Feedback added");
     }
-
 }

@@ -24,4 +24,10 @@ public class AuthRepository(ShopDbContext context) : IAuthRepository
     {
         return await context.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }
+
+    public async Task<User?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+    }
+
 }

@@ -1,4 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Shop.Application.DTOs.ProductImageDTOs;
+using Shop.Application.Interfaces.Services;
+
+namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/products/{productId:int}/images")]
@@ -19,6 +23,7 @@ public class ProductImagesController(
     }
 
     [HttpPost]
+    [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<IActionResult> AddImage(
         int productId,
         IFormFile file,
@@ -27,14 +32,23 @@ public class ProductImagesController(
         if (file == null || file.Length == 0)
             return BadRequest("Image is required");
 
-        if (!file.ContentType.StartsWith("image/"))
+        if (string.IsNullOrWhiteSpace(file.ContentType) ||
+            !file.ContentType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
+        {
             return BadRequest("Only image files are allowed");
+        }
 
         try
         {
+            await using var stream = file.OpenReadStream();
+
             var image = await productImageService.AddAsync(
                 productId,
-                file,
+                stream,
+                file.FileName,
+                file.ContentType,
                 cancellationToken);
 
             if (image == null)
@@ -78,6 +92,26 @@ public class ProductImagesController(
 
         if (!updated)
             return NotFound("Image not found");
+
+        return Ok();
+    }
+
+    [HttpPatch("order")]
+    public async Task<IActionResult> UpdateOrder(
+    int productId,
+    [FromBody] ProductImageOrderDTO dto,
+    CancellationToken cancellationToken)
+    {
+        if (dto.ImageIds == null || dto.ImageIds.Count == 0)
+            return BadRequest("Image ids are required");
+
+        var updated = await productImageService.UpdateOrderAsync(
+            productId,
+            dto.ImageIds,
+            cancellationToken);
+
+        if (!updated)
+            return BadRequest("Invalid image order");
 
         return Ok();
     }

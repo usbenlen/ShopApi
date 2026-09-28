@@ -1,5 +1,7 @@
 ﻿using Shop.Application.DTOs.ProductDTOs;
 
+namespace Shop.Application.Interfaces.Services;
+
 public interface IProductImageService
 {
     Task<IReadOnlyList<ProductImageReadDTO>> GetByProductIdAsync(
@@ -8,7 +10,9 @@ public interface IProductImageService
 
     Task<ProductImageReadDTO?> AddAsync(
         int productId,
-        IFormFile file,
+        Stream stream,
+        string fileName,
+        string? contentType,
         CancellationToken cancellationToken = default);
 
     Task<bool> DeleteAsync(
@@ -19,5 +23,10 @@ public interface IProductImageService
     Task<bool> SetPrimaryAsync(
         int productId,
         int imageId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> UpdateOrderAsync(
+        int productId,
+        IReadOnlyList<int> imageIds,
         CancellationToken cancellationToken = default);
 }

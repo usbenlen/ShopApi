@@ -1,5 +1,7 @@
 ﻿using Shop.Domain.Models;
 
+namespace Shop.Application.Interfaces.Repository;
+
 public interface IProductImageRepository
 {
     Task<IReadOnlyList<ProductImage>> GetByProductIdAsync(
@@ -21,6 +23,11 @@ public interface IProductImageRepository
 
     Task UnsetPrimaryAsync(
         int productId,
+        CancellationToken cancellationToken = default);
+
+    Task UpdateOrderAsync(
+        int productId,
+        IReadOnlyList<int> imageIds,
         CancellationToken cancellationToken = default);
 
     Task SaveChangesAsync(
