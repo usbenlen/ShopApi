@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +11,6 @@ using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.DTOs.ProductFeedbackDTOs;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Queries.Product.GetProductById;
-
-using Shop.Domain.Enums;
 
 using System.Security.Claims;
 
@@ -27,7 +26,8 @@ public class ProductsController(
     IImageService imageService,
     IProductFeedbackService productFeedbackService,
     IConfiguration configuration,
-    IMediator mediator)
+    IMediator mediator,
+    IValidator<ProductFeedbackCreateDTO> productFeedbackValidator)
     : ControllerBase
 {
     /// <summary>
@@ -189,30 +189,10 @@ public class ProductsController(
         [FromBody] ProductFeedbackCreateDTO dto,
         CancellationToken cancellationToken)
     {
-        if (id <= 0)
-            return BadRequest("Invalid product id");
+        dto.ProductId = id;
 
-        if (string.IsNullOrWhiteSpace(dto.Message))
-            return BadRequest("Message is required");
-
-        if (dto.Message.Length > 2000)
-            return BadRequest(
-                "Message cannot exceed 2000 characters");
-
-        if (dto.Type == ProductFeedbackType.Review)
-        {
-            if (!dto.Rating.HasValue ||
-                dto.Rating < 1 ||
-                dto.Rating > 5)
-            {
-                return BadRequest(
-                    "Review rating must be between 1 and 5");
-            }
-        }
-        else if (dto.Type == ProductFeedbackType.Question)
-        {
-            dto.Rating = null;
-        }
+        var validationResult = await productFeedbackValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid) return BadRequest(validationResult.Errors);
 
         var userIdClaim = User.FindFirst(
             ClaimTypes.NameIdentifier);
@@ -229,8 +209,7 @@ public class ProductsController(
             id,
             cancellationToken);
 
-        if (product == null)
-            return NotFound("Product not found");
+        if (product == null) return NotFound("Product not found");
 
         await productFeedbackService.CreateAsync(
             id,

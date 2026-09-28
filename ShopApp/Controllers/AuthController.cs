@@ -18,7 +18,8 @@ public class AuthController(IAuthService _authService, IPasswordService _passwor
     public async Task<IActionResult> RegisterUser([FromBody] UserCreateDTO dto, CancellationToken cancellationToken)
     {
         var (user, accessToken, refreshToken) = await _authService.RegisterAsync(dto, cancellationToken);
-        if (user == null) return Conflict(new { message = "This Email is already taken" });
+        if (user == null || accessToken == null || refreshToken == null)
+            return Conflict(new { message = "This Email is already taken" });
 
         Response.Cookies.Append(
             "refresh_token",

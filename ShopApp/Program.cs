@@ -173,10 +173,9 @@ public class Program
             cfg.RegisterServicesFromAssembly(typeof(GetProductByIdHandler).Assembly);
         });
 
-        //======================VALIDATORS=================
-        builder.Services.AddValidatorsFromAssemblyContaining<CategoryValidator>();
-        //Допідключити ще інші валідатори
-        // builder.Services.AddControllers(options => { options.ModelValidatorProviders.Clear(); });
+        // -- Validators --
+        // Реєструє всі реалізації IValidator<T> зі збірки Shop.Application
+        builder.Services.AddValidatorsFromAssembly(typeof(CategoryValidator).Assembly);
 
         // -- DI container --
         builder.Services.AddControllers();
@@ -298,7 +297,7 @@ public class Program
             });
         }
 
-        app.UseExceptionHandler();
+        //app.UseExceptionHandler();
 
         //Дозволити між-доменні запити
         app.UseCors("DevelopmentPolicy");

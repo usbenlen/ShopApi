@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shop.Application.DTOs.OrderDTOs;
 using Shop.Application.Interfaces.Services;
@@ -9,13 +10,16 @@ namespace Shop.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class OrdersController(IQueueService _queueService, IProductService _productService) : ControllerBase
+public class OrdersController(
+    IQueueService _queueService,
+    IProductService _productService,
+    IValidator<CreateOrderDTO> _validator) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDTO dto, CancellationToken cancellationToken)
     {
-        if (dto.Products is null || dto.Products.Count == 0)
-            return BadRequest("Order must contain at least one product");
+        var validationResult = await _validator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid) return BadRequest(validationResult.Errors);
 
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -34,12 +38,6 @@ public class OrdersController(IQueueService _queueService, IProductService _prod
 
         foreach (var item in requestedProducts)
         {
-            if (item.ProductId <= 0)
-                return BadRequest($"Invalid product id: {item.ProductId}");
-
-            if (item.Count <= 0)
-                return BadRequest($"Invalid count for product {item.ProductId}");
-
             var product = await _productService.GetProductByIdAsync(item.ProductId, cancellationToken);
 
             if (product is null)

@@ -69,8 +69,8 @@ public class AuthService(
 
         var user = await repository.GetByEmailAsync(email, cancellationToken);
 
-        if (user == null || !user.IsActive) return null;
-        if (!hashHelper.IsPasswordValid(dto.Password,user.PasswordHash))
+        if (user == null || !user.IsActive || string.IsNullOrEmpty(user.PasswordHash)) return null;
+        if (!hashHelper.IsPasswordValid(dto.Password, user.PasswordHash))
             return null;
 
         var accessToken = jwtService.GenerateAccessToken(mapper.Map<UserTokenDTO>(user));

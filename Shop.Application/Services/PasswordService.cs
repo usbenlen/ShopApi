@@ -79,7 +79,7 @@ public class PasswordService(
     {
         var user = await userRepository.GetByIdAsync(userId, cancellationToken);
 
-        if (user == null || !user.IsActive) return false;
+        if (user == null || !user.IsActive || string.IsNullOrEmpty(user.PasswordHash)) return false;
 
         if (!hashHelper.IsPasswordValid(dto.CurrentPassword, user.PasswordHash))
             return false;
