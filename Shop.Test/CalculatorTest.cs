@@ -7,14 +7,14 @@ public class CalculatorTest
     [Fact]
     public void SumTest()
     {
-        //A - Arrange
+        //A - Arrange (підготовка)
         int a = 10, b = 20;
         Calculator calculator = new Calculator();
 
-        //A - Act
+        //A - Act (дія)
         int result = calculator.Sum(a, b);
 
-        //Assert
+        //A - Assert (самоперевірка)
         Assert.Equal(30, result);
     }
 

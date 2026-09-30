@@ -40,7 +40,7 @@ public class CategoryControllerTest
         //A - Act
         var result = await controller.GetCategoryById(1, CancellationToken.None);
 
-        //Assert
+        //A - Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         var returnedCategory = Assert.IsType<CategoryReadDTO>(okResult.Value);
         Assert.Equal("Test category", returnedCategory.Name);
